@@ -1,0 +1,17 @@
+[package]
+name = "sls"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] } # 协程库
+warp = "0.3" # warp库
+log = "0.4" # 日志库
+pretty_env_logger = "0.4" # 日志库
+serde_json = "1" # json库
+mongodb = "2.7.0" # mongo数据库
+futures = "0.3" # 用于mongo数据库查找
+serde = { version = "1.0", features = ["derive"] } # 用于mongo数据库读取
+walkdir = "2.4.0" # 用于照片墙读取照片
