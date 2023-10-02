@@ -33,7 +33,10 @@ pub async fn fun_read_image_files_in_folder() -> Result<warp::reply::Json, warp:
             }
         }
     }
-    let sth = json!(image_files); // 创造serde_json变量（类型叫Value）
+    let sth = json!({
+        "status":config::API_STATUS_SUCCESS,
+        "data":image_files
+    }); // 创造serde_json变量（类型叫Value）
     let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
     return Ok(sth_warp);
 }

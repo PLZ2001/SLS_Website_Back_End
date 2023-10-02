@@ -15,3 +15,4 @@ mongodb = "2.7.0" # mongo数据库
 futures = "0.3" # 用于mongo数据库查找
 serde = { version = "1.0", features = ["derive"] } # 用于mongo数据库读取
 walkdir = "2.4.0" # 用于照片墙读取照片
+sha256 = "1.1.2" # SHA256

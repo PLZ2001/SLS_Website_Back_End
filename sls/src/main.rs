@@ -3,11 +3,14 @@ mod get_sls_members;
 mod read_image_files_in_folder;
 mod submit_signup_info;
 mod submit_login_info;
+mod token;
+mod get_user_name;
 
 use get_sls_members::fun_get_sls_members;
 use read_image_files_in_folder::fun_read_image_files_in_folder;
 use submit_signup_info::{SignUpInfo, fun_submit_signup_info};
 use submit_login_info::{LoginInfo, fun_submit_login_info};
+use get_user_name::fun_get_user_name;
 
 use std::env;
 use std::net::{IpAddr, SocketAddr};
@@ -21,10 +24,11 @@ async fn main() {
     let info_log = warp::log("info_log");
 
     // 设置cors
+    let origin: &str = &format!("http://{}:{}", IpAddr::from(config::FRONT_URL), config::FRONT_PORT);
     let cors = warp::cors()
-        .allow_any_origin()
+        .allow_origin(origin)
         .allow_credentials(true)
-        .allow_headers(vec!["access-control-allow-origin", "content-type"])
+        .allow_headers(vec!["Cookie", "Access-Control-Allow-Credentials","Access-Control-Allow-Origin", "Content-Type"])
         .allow_methods(vec!["POST", "GET", "PUT", "DELETE"]);
 
     // 设置路由
@@ -67,6 +71,15 @@ async fn main() {
         .and(warp::body::json::<LoginInfo>())
         .and_then(fun_submit_login_info);
 
+    // API5：根据Cookie中的token，获取名字
+    // url:./get_user_name
+    // 参数：json
+    // 返回：json
+    let get_user_name = warp::get()
+        .and(warp::path("get_user_name"))
+        .and(warp::path::end())
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_get_user_name);
 
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
@@ -75,6 +88,7 @@ async fn main() {
         .or(read_image_files_in_folder)
         .or(submit_signup_info)
         .or(submit_login_info)
+        .or(get_user_name)
         .with(info_log)
         .with(cors);
 

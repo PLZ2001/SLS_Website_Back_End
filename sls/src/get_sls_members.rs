@@ -85,9 +85,13 @@ pub async fn fun_get_sls_members() -> Result<warp::reply::Json, warp::Rejection>
                         }
                     }
                     let sth = json!({
-                                    "teachers":teachers,
-                                    "students":students,
-                                    "graduates":graduates}); // 创造serde_json变量（类型叫Value）
+                        "status":config::API_STATUS_SUCCESS,
+                        "data":{
+                            "teachers":teachers,
+                            "students":students,
+                            "graduates":graduates
+                        }
+                    }); // 创造serde_json变量（类型叫Value）
                     let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                     return Ok(sth_warp);
                 }
