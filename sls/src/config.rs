@@ -10,6 +10,7 @@ pub const MONGODB_PORT: u16 = 27017;
 pub const DIR_STATIC: &str = "resources/";
 pub const DIR_PHOTO_WALL: &str = "images/photo_wall/";
 pub const DIR_SLS_MEMBERS: &str = "images/sls_members/";
+pub const DIR_FILES: &str = "files/";
 pub const API_STATUS_SUCCESS: &str = "SUCCESS";
 pub const API_STATUS_FAILURE_WITH_REASONS: &str = "FAILURE_WITH_REASONS";
 pub const API_STATUS_FAILURE_WITHOUT_REASONS: &str = "FAILURE_WITHOUT_REASONS";
@@ -22,4 +23,40 @@ pub struct USER {
     pub grade: String,
     pub password: String,
     pub token: token::Token,
+}
+
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
+pub struct FILE {
+    pub category: String,
+    pub name: String,
+}
+
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
+pub struct STATS {
+    pub watch: i32,
+    pub like: i32,
+    pub share: i32,
+    pub favorite: i32,
+    pub comment: i32,
+}
+
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
+pub struct POST {
+    pub title: String,
+    pub content: String,
+    pub user_id: String,
+    pub time: f64,
+    pub stat: STATS,
+    pub files: Vec<FILE>,
+    pub comments: Vec<COMMENT>,
+}
+
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
+pub struct COMMENT {
+    pub content: String,
+    pub user_id: String,
+    pub time: f64,
+    pub stat: STATS,
+    pub files: Vec<FILE>,
+    pub comments: Vec<COMMENT>,
 }

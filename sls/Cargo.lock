@@ -1450,6 +1450,7 @@ dependencies = [
 name = "sls"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "futures",
  "log",
  "mongodb",

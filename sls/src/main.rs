@@ -5,12 +5,16 @@ mod submit_signup_info;
 mod submit_login_info;
 mod token;
 mod get_user_name;
+mod submit_new_post;
+mod submit_files;
 
 use get_sls_members::fun_get_sls_members;
 use read_image_files_in_folder::fun_read_image_files_in_folder;
 use submit_signup_info::{SignUpInfo, fun_submit_signup_info};
 use submit_login_info::{LoginInfo, fun_submit_login_info};
 use get_user_name::fun_get_user_name;
+use submit_new_post::{NewPost, fun_submit_new_post};
+use submit_files::fun_submit_files;
 
 use std::env;
 use std::net::{IpAddr, SocketAddr};
@@ -81,6 +85,28 @@ async fn main() {
         .and(warp::filters::cookie::optional("token"))
         .and_then(fun_get_user_name);
 
+    // API6：向数据库写入新发的帖子
+    // url:./submit_signup_info
+    // 参数：json
+    // 返回：json
+    let submit_new_post = warp::post()
+        .and(warp::path("submit_new_post"))
+        .and(warp::path::end())
+        .and(warp::body::json::<NewPost>())
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_submit_new_post);
+
+    // API7：存储文件
+    // url:./submit_files
+    // 参数：json
+    // 返回：json
+    let submit_files = warp::post()
+        .and(warp::path("submit_files"))
+        .and(warp::path::end())
+        .and(warp::multipart::form().max_length(None))
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_submit_files);
+
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
     let route = dir_static
@@ -89,6 +115,8 @@ async fn main() {
         .or(submit_signup_info)
         .or(submit_login_info)
         .or(get_user_name)
+        .or(submit_new_post)
+        .or(submit_files)
         .with(info_log)
         .with(cors);
 
