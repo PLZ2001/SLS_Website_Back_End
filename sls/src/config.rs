@@ -42,21 +42,23 @@ pub struct STATS {
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct POST {
+    pub post_id: String,
     pub title: String,
     pub content: String,
     pub user_id: String,
     pub time: f64,
     pub stat: STATS,
     pub files: Vec<FILE>,
-    pub comments: Vec<COMMENT>,
+    pub comment_ids: Vec<String>,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct COMMENT {
+    pub comment_id: String,
     pub content: String,
     pub user_id: String,
     pub time: f64,
     pub stat: STATS,
     pub files: Vec<FILE>,
-    pub comments: Vec<COMMENT>,
+    pub comment_ids: Vec<String>,
 }

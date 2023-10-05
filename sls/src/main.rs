@@ -7,6 +7,8 @@ mod token;
 mod get_user_name;
 mod submit_new_post;
 mod submit_files;
+mod get_posts;
+mod get_name_with_student_id;
 
 use get_sls_members::fun_get_sls_members;
 use read_image_files_in_folder::fun_read_image_files_in_folder;
@@ -15,6 +17,8 @@ use submit_login_info::{LoginInfo, fun_submit_login_info};
 use get_user_name::fun_get_user_name;
 use submit_new_post::{NewPost, fun_submit_new_post};
 use submit_files::fun_submit_files;
+use get_posts::{GetPostsConfig, fun_get_posts};
+use get_name_with_student_id::fun_get_name_with_student_id;
 
 use std::env;
 use std::net::{IpAddr, SocketAddr};
@@ -77,7 +81,7 @@ async fn main() {
 
     // API5：根据Cookie中的token，获取名字
     // url:./get_user_name
-    // 参数：json
+    // 参数：无
     // 返回：json
     let get_user_name = warp::get()
         .and(warp::path("get_user_name"))
@@ -86,26 +90,48 @@ async fn main() {
         .and_then(fun_get_user_name);
 
     // API6：向数据库写入新发的帖子
-    // url:./submit_signup_info
+    // url:./submit_new_post/编号
     // 参数：json
     // 返回：json
     let submit_new_post = warp::post()
         .and(warp::path("submit_new_post"))
+        .and(warp::path::param::<String>())
         .and(warp::path::end())
         .and(warp::body::json::<NewPost>())
         .and(warp::filters::cookie::optional("token"))
         .and_then(fun_submit_new_post);
 
     // API7：存储文件
-    // url:./submit_files
+    // url:./submit_files/编号
     // 参数：json
     // 返回：json
     let submit_files = warp::post()
         .and(warp::path("submit_files"))
+        .and(warp::path::param::<String>())
         .and(warp::path::end())
         .and(warp::multipart::form().max_length(None))
         .and(warp::filters::cookie::optional("token"))
         .and_then(fun_submit_files);
+
+    // API8：读取帖子
+    // url:./get_posts
+    // 参数：json
+    // 返回：json
+    let get_posts = warp::post()
+        .and(warp::path("get_posts"))
+        .and(warp::path::end())
+        .and(warp::body::json::<GetPostsConfig>())
+        .and_then(fun_get_posts);
+
+    // API9：根据学号获取名字
+    // url:./get_name_with_student_id
+    // 参数：无
+    // 返回：json
+    let get_name_with_student_id = warp::get()
+        .and(warp::path("get_name_with_student_id"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and_then(fun_get_name_with_student_id);
 
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
@@ -117,6 +143,8 @@ async fn main() {
         .or(get_user_name)
         .or(submit_new_post)
         .or(submit_files)
+        .or(get_posts)
+        .or(get_name_with_student_id)
         .with(info_log)
         .with(cors);
 

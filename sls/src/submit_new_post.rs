@@ -19,7 +19,7 @@ pub struct FailedToSubmitNewPost(Box<String>);
 
 impl warp::reject::Reject for FailedToSubmitNewPost {}
 
-pub async fn fun_submit_new_post(new_post: NewPost, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_submit_new_post(post_id:String, new_post: NewPost, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -43,27 +43,20 @@ pub async fn fun_submit_new_post(new_post: NewPost, token: Option<String>) -> Re
                                                         match new_post.time.parse::<f64>() {
                                                             Ok(time) => {
                                                                 let post = config::POST {
+                                                                    post_id: post_id,
                                                                     title: new_post.title,
                                                                     content: new_post.content,
                                                                     user_id: user.student_id,
                                                                     time: time,
                                                                     stat: config::STATS{watch:0,like:0,share:0,favorite:0,comment:0},
                                                                     files: new_post.files,
-                                                                    comments: Vec::new(),
+                                                                    comment_ids: Vec::new(),
                                                                 };
                                                                 match collection.insert_one(post.clone(), None).await {
                                                                     Ok(_) => {
                                                                         let sth = json!({
                                                                             "status":config::API_STATUS_SUCCESS,
-                                                                            "data":{
-                                                                                "title":post.title,
-                                                                                "content":post.content,
-                                                                                "user_id":post.user_id,
-                                                                                "time":post.time,
-                                                                                "stat":post.stat,
-                                                                                "files":post.files,
-                                                                                "comments":post.comments,
-                                                                            }
+                                                                            "data":post
                                                                         }); // 创造serde_json变量（类型叫Value）
                                                                         let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                                                                         return Ok(sth_warp);
