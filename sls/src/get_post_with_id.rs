@@ -5,26 +5,26 @@ use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
 
 #[derive(Debug)]
-pub struct FailedToGetNameWithStudentId(Box<String>);
+pub struct FailedToGetPostWithId(Box<String>);
 
-impl warp::reject::Reject for FailedToGetNameWithStudentId {}
+impl warp::reject::Reject for FailedToGetPostWithId {}
 
-pub async fn fun_get_name_with_student_id(student_id: String) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_get_post_with_id(post_id: String) -> Result<warp::reply::Json, warp::Rejection> {
     match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
         Ok(client_options) => {
             match Client::with_options(client_options) {
                 Ok(client) => {
-                    let db = client.database("users");
+                    let db = client.database("forum");
                     // Get a handle to a collection in the database.
-                    let collection = db.collection::<config::USER>("guests");
-                    let filter = doc! {"student_id": student_id.clone()};
+                    let collection = db.collection::<config::POST>("posts");
+                    let filter = doc! {"post_id": post_id.clone()};
                     match collection.find_one(filter, None).await {
                         Ok(find_result) => {
                             match find_result {
-                                Some(user) => {
+                                Some(post) => {
                                     let sth = json!({
                                         "status":config::API_STATUS_SUCCESS,
-                                        "data":user.name
+                                        "data":post
                                     }); // 创造serde_json变量（类型叫Value）
                                     let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                                     return Ok(sth_warp);
@@ -32,7 +32,7 @@ pub async fn fun_get_name_with_student_id(student_id: String) -> Result<warp::re
                                 None => {
                                     let sth = json!({
                                         "status":config::API_STATUS_FAILURE_WITH_REASONS,
-                                        "reasons":format!("该学号不存在")
+                                        "reasons":format!("该帖子不存在")
                                     }); // 创造serde_json变量（类型叫Value）
                                     let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                                     return Ok(sth_warp);
@@ -40,17 +40,17 @@ pub async fn fun_get_name_with_student_id(student_id: String) -> Result<warp::re
                             }
                         }
                         Err(e) => {
-                            return Err(warp::reject::custom(FailedToGetNameWithStudentId(Box::new(e.kind.to_string()))));
+                            return Err(warp::reject::custom(FailedToGetPostWithId(Box::new(e.kind.to_string()))));
                         }
                     }
                 }
                 Err(e) => {
-                    return Err(warp::reject::custom(FailedToGetNameWithStudentId(Box::new(e.kind.to_string()))));
+                    return Err(warp::reject::custom(FailedToGetPostWithId(Box::new(e.kind.to_string()))));
                 }
             }
         }
         Err(e) => {
-            return Err(warp::reject::custom(FailedToGetNameWithStudentId(Box::new(e.kind.to_string()))));
+            return Err(warp::reject::custom(FailedToGetPostWithId(Box::new(e.kind.to_string()))));
         }
     }
 }

@@ -44,7 +44,7 @@ pub async fn fun_get_posts(get_posts_config: GetPostsConfig) -> Result<warp::rep
                                                         match find_result.1 {
                                                             Ok(post) => {
                                                                 cnt = cnt + 1; // cnt表示搜索到第几条（从1开始计数）
-                                                                if cnt < (&sequence-1)*&pieces {
+                                                                if cnt <= (&sequence-1)*&pieces {
                                                                     continue 'find_loop;
                                                                 } else if cnt <= &sequence*&pieces {
                                                                     posts.push(json!(post));

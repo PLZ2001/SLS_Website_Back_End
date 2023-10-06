@@ -9,6 +9,11 @@ mod submit_new_post;
 mod submit_files;
 mod get_posts;
 mod get_name_with_student_id;
+mod get_post_with_id;
+mod get_comments;
+mod submit_new_comment;
+mod get_comment_with_id;
+mod get_comments_of_comments;
 
 use get_sls_members::fun_get_sls_members;
 use read_image_files_in_folder::fun_read_image_files_in_folder;
@@ -19,6 +24,12 @@ use submit_new_post::{NewPost, fun_submit_new_post};
 use submit_files::fun_submit_files;
 use get_posts::{GetPostsConfig, fun_get_posts};
 use get_name_with_student_id::fun_get_name_with_student_id;
+use get_post_with_id::fun_get_post_with_id;
+use get_comments::{GetCommentsConfig, fun_get_comments};
+use submit_new_comment::{NewComment, fun_submit_new_comment};
+use get_comment_with_id::fun_get_comment_with_id;
+use get_comments_of_comments::{GetCommentsOfCommentsConfig, fun_get_comments_of_comments};
+
 
 use std::env;
 use std::net::{IpAddr, SocketAddr};
@@ -52,7 +63,7 @@ async fn main() {
 
     // API2：读取照片墙的照片名单
     // url:./read_image_files_in_folder
-    // 参数：json
+    // 参数：无
     // 返回：json
     let read_image_files_in_folder = warp::get() // 使用get方式
         .and(warp::path("read_image_files_in_folder")) // url元素
@@ -103,7 +114,7 @@ async fn main() {
 
     // API7：存储文件
     // url:./submit_files/编号
-    // 参数：json
+    // 参数：formdata
     // 返回：json
     let submit_files = warp::post()
         .and(warp::path("submit_files"))
@@ -124,7 +135,7 @@ async fn main() {
         .and_then(fun_get_posts);
 
     // API9：根据学号获取名字
-    // url:./get_name_with_student_id
+    // url:./get_name_with_student_id/编号
     // 参数：无
     // 返回：json
     let get_name_with_student_id = warp::get()
@@ -132,6 +143,60 @@ async fn main() {
         .and(warp::path::param::<String>())
         .and(warp::path::end())
         .and_then(fun_get_name_with_student_id);
+
+    // API10：根据帖子编号获取帖子
+    // url:./get_post_with_id/编号
+    // 参数：无
+    // 返回：json
+    let get_post_with_id = warp::get()
+        .and(warp::path("get_post_with_id"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and_then(fun_get_post_with_id);
+
+    // API11：读取评论
+    // url:./get_comments/编号
+    // 参数：json
+    // 返回：json
+    let get_comments = warp::post()
+        .and(warp::path("get_comments"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::body::json::<GetCommentsConfig>())
+        .and_then(fun_get_comments);
+
+    // API12：向数据库写入给的帖子的评论
+    // url:./submit_new_comment/编号
+    // 参数：json
+    // 返回：json
+    let submit_new_comment = warp::post()
+        .and(warp::path("submit_new_comment"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::body::json::<NewComment>())
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_submit_new_comment);
+
+    // API13：根据评论编号获取评论
+    // url:./get_comment_with_id/编号
+    // 参数：无
+    // 返回：json
+    let get_comment_with_id = warp::get()
+        .and(warp::path("get_comment_with_id"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and_then(fun_get_comment_with_id);
+
+    // API14：读取评论的评论
+    // url:./get_comments_of_comments/编号
+    // 参数：json
+    // 返回：json
+    let get_comments_of_comments = warp::post()
+        .and(warp::path("get_comments_of_comments"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::body::json::<GetCommentsOfCommentsConfig>())
+        .and_then(fun_get_comments_of_comments);
 
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
@@ -145,6 +210,11 @@ async fn main() {
         .or(submit_files)
         .or(get_posts)
         .or(get_name_with_student_id)
+        .or(get_post_with_id)
+        .or(get_comments)
+        .or(submit_new_comment)
+        .or(get_comment_with_id)
+        .or(get_comments_of_comments)
         .with(info_log)
         .with(cors);
 
