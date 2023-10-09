@@ -7,7 +7,7 @@ use mongodb::options::ClientOptions;
 use serde::{Deserialize, Serialize};
 use sha256::digest;
 
-use crate::{config, token};
+use crate::config;
 
 #[derive(Debug)]
 pub struct FailedToUpdateToken(Box<String>);

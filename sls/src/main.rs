@@ -6,11 +6,11 @@ use warp::Filter;
 use get_comment_with_id::fun_get_comment_with_id;
 use get_comments::{fun_get_comments, GetCommentsConfig};
 use get_comments_of_comments::{fun_get_comments_of_comments, GetCommentsOfCommentsConfig};
-use get_name_with_student_id::fun_get_name_with_student_id;
+use get_user_profile_with_student_id::fun_get_user_profile_with_student_id;
 use get_post_with_id::fun_get_post_with_id;
 use get_posts::{fun_get_posts, GetPostsConfig};
 use get_sls_members::fun_get_sls_members;
-use get_user_name::fun_get_user_name;
+use get_user_profile::fun_get_user_profile;
 use read_image_files_in_folder::fun_read_image_files_in_folder;
 use submit_an_action::{Action, fun_submit_an_action};
 use submit_files::fun_submit_files;
@@ -18,6 +18,8 @@ use submit_login_info::{fun_submit_login_info, LoginInfo};
 use submit_new_comment::{fun_submit_new_comment, NewComment};
 use submit_new_post::{fun_submit_new_post, NewPost};
 use submit_signup_info::{fun_submit_signup_info, SignUpInfo};
+use get_posts_with_student_id::{fun_get_posts_with_student_id, GetPostsWithStudentIdConfig};
+use get_favorite_posts_with_student_id::{fun_get_favorite_posts_with_student_id, GetFavoritePostsWithStudentIdConfig};
 
 mod config;
 mod get_sls_members;
@@ -25,17 +27,19 @@ mod read_image_files_in_folder;
 mod submit_signup_info;
 mod submit_login_info;
 mod token;
-mod get_user_name;
+mod get_user_profile;
 mod submit_new_post;
 mod submit_files;
 mod get_posts;
-mod get_name_with_student_id;
+mod get_user_profile_with_student_id;
 mod get_post_with_id;
 mod get_comments;
 mod submit_new_comment;
 mod get_comment_with_id;
 mod get_comments_of_comments;
 mod submit_an_action;
+mod get_posts_with_student_id;
+mod get_favorite_posts_with_student_id;
 
 #[tokio::main]
 async fn main() {
@@ -92,15 +96,15 @@ async fn main() {
         .and(warp::body::json::<LoginInfo>())
         .and_then(fun_submit_login_info);
 
-    // API5：根据Cookie中的token，获取名字
-    // url:./get_user_name
+    // API5：根据Cookie中的token，获取用户资料
+    // url:./get_user_profile
     // 参数：无
     // 返回：json
-    let get_user_name = warp::get()
-        .and(warp::path("get_user_name"))
+    let get_user_profile = warp::get()
+        .and(warp::path("get_user_profile"))
         .and(warp::path::end())
         .and(warp::filters::cookie::optional("token"))
-        .and_then(fun_get_user_name);
+        .and_then(fun_get_user_profile);
 
     // API6：向数据库写入新发的帖子
     // url:./submit_new_post/编号
@@ -136,15 +140,15 @@ async fn main() {
         .and(warp::body::json::<GetPostsConfig>())
         .and_then(fun_get_posts);
 
-    // API9：根据学号获取名字
-    // url:./get_name_with_student_id/编号
+    // API9：根据账号获取用户资料
+    // url:./get_user_profile_with_student_id/编号
     // 参数：无
     // 返回：json
-    let get_name_with_student_id = warp::get()
-        .and(warp::path("get_name_with_student_id"))
+    let get_user_profile_with_student_id = warp::get()
+        .and(warp::path("get_user_profile_with_student_id"))
         .and(warp::path::param::<String>())
         .and(warp::path::end())
-        .and_then(fun_get_name_with_student_id);
+        .and_then(fun_get_user_profile_with_student_id);
 
     // API10：根据帖子编号获取帖子
     // url:./get_post_with_id/编号
@@ -211,6 +215,28 @@ async fn main() {
         .and(warp::filters::cookie::optional("token"))
         .and_then(fun_submit_an_action);
 
+    // API16：读取指定用户所发的帖子
+    // url:./get_posts_with_student_id/编号
+    // 参数：json
+    // 返回：json
+    let get_posts_with_student_id = warp::post()
+        .and(warp::path("get_posts_with_student_id"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::body::json::<GetPostsWithStudentIdConfig>())
+        .and_then(fun_get_posts_with_student_id);
+
+    // API17：读取指定用户所收藏的帖子
+    // url:./get_favorite_posts_with_student_id/编号
+    // 参数：json
+    // 返回：json
+    let get_favorite_posts_with_student_id = warp::post()
+        .and(warp::path("get_favorite_posts_with_student_id"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::body::json::<GetFavoritePostsWithStudentIdConfig>())
+        .and_then(fun_get_favorite_posts_with_student_id);
+
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
     let route = dir_static
@@ -218,17 +244,19 @@ async fn main() {
         .or(read_image_files_in_folder)
         .or(submit_signup_info)
         .or(submit_login_info)
-        .or(get_user_name)
+        .or(get_user_profile)
         .or(submit_new_post)
         .or(submit_files)
         .or(get_posts)
-        .or(get_name_with_student_id)
+        .or(get_user_profile_with_student_id)
         .or(get_post_with_id)
         .or(get_comments)
         .or(submit_new_comment)
         .or(get_comment_with_id)
         .or(get_comments_of_comments)
         .or(submit_an_action)
+        .or(get_posts_with_student_id)
+        .or(get_favorite_posts_with_student_id)
         .with(info_log)
         .with(cors);
 

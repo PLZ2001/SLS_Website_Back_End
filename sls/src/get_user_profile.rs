@@ -8,11 +8,11 @@ use crate::config;
 use crate::token;
 
 #[derive(Debug)]
-pub struct FailedToGetUserName(Box<String>);
+pub struct FailedToGetUserProfile(Box<String>);
 
-impl warp::reject::Reject for FailedToGetUserName {}
+impl warp::reject::Reject for FailedToGetUserProfile {}
 
-pub async fn fun_get_user_name(token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_get_user_profile(token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -33,8 +33,9 @@ pub async fn fun_get_user_name(token: Option<String>) -> Result<warp::reply::Jso
                                                         let sth = json!({
                                                             "status":config::API_STATUS_SUCCESS,
                                                             "data":{
+                                                                "student_id": user.student_id,
                                                                 "name": user.name,
-                                                                "student_id": user.student_id
+                                                                "sls_verification": user.sls_verification,
                                                             }
                                                         }); // 创造serde_json变量（类型叫Value）
                                                         let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
@@ -56,7 +57,7 @@ pub async fn fun_get_user_name(token: Option<String>) -> Result<warp::reply::Jso
                                                     }
                                                 }
                                                 Err(e) => {
-                                                    return Err(warp::reject::custom(FailedToGetUserName(Box::new(e))));
+                                                    return Err(warp::reject::custom(FailedToGetUserProfile(Box::new(e))));
                                                 }
                                             }
                                         }
@@ -71,17 +72,17 @@ pub async fn fun_get_user_name(token: Option<String>) -> Result<warp::reply::Jso
                                     }
                                 }
                                 Err(e) => {
-                                    return Err(warp::reject::custom(FailedToGetUserName(Box::new(e.kind.to_string()))));
+                                    return Err(warp::reject::custom(FailedToGetUserProfile(Box::new(e.kind.to_string()))));
                                 }
                             }
                         }
                         Err(e) => {
-                            return Err(warp::reject::custom(FailedToGetUserName(Box::new(e.kind.to_string()))));
+                            return Err(warp::reject::custom(FailedToGetUserProfile(Box::new(e.kind.to_string()))));
                         }
                     }
                 }
                 Err(e) => {
-                    return Err(warp::reject::custom(FailedToGetUserName(Box::new(e.kind.to_string()))));
+                    return Err(warp::reject::custom(FailedToGetUserProfile(Box::new(e.kind.to_string()))));
                 }
             }
         }

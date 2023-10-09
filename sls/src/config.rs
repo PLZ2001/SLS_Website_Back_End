@@ -18,12 +18,20 @@ pub const API_STATUS_FAILURE_WITHOUT_REASONS: &str = "FAILURE_WITHOUT_REASONS";
 pub const COOKIES_EXPIRES_SECONDS: f64 = 2000000.0;
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
+pub struct SLSMEMBER {
+    pub name: String,
+    pub description: String,
+    pub image: String,
+    pub student_id: String,
+}
+
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct USER {
     pub student_id: String,
     pub name: String,
-    pub grade: String,
     pub password: String,
     pub token: token::Token,
+    pub sls_verification: bool
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]

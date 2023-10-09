@@ -12,7 +12,6 @@ use crate::token;
 pub struct SignUpInfo {
     pub student_id: String,
     pub name: String,
-    pub grade: String,
     pub password: String,
 }
 
@@ -36,7 +35,7 @@ pub async fn fun_submit_signup_info(signup_info: SignUpInfo) -> Result<warp::rep
                                 Some(_) => {
                                     let sth = json!({
                                         "status":config::API_STATUS_FAILURE_WITH_REASONS,
-                                        "reasons":"该学号已存在账户"
+                                        "reasons":"该账号已注册"
                                     }); // 创造serde_json变量（类型叫Value）
                                     let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                                     return Ok(sth_warp);
@@ -45,9 +44,9 @@ pub async fn fun_submit_signup_info(signup_info: SignUpInfo) -> Result<warp::rep
                                     let user = config::USER {
                                         student_id: signup_info.student_id,
                                         name: signup_info.name,
-                                        grade: signup_info.grade,
                                         password: signup_info.password,
                                         token: token::Token::new_empty(),
+                                        sls_verification: false
                                     };
                                     match collection.insert_one(user.clone(), None).await {
                                         Ok(_) => {
@@ -56,7 +55,6 @@ pub async fn fun_submit_signup_info(signup_info: SignUpInfo) -> Result<warp::rep
                                                 "data":{
                                                     "student_id":user.student_id,
                                                     "name":user.name,
-                                                    "grade":user.grade,
                                                     "password":user.password
                                                 }
                                             }); // 创造serde_json变量（类型叫Value）

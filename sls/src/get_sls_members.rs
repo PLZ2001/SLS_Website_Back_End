@@ -4,17 +4,9 @@ use futures::StreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
 use mongodb::options::FindOptions;
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::config;
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Member {
-    name: String,
-    description: String,
-    image: String,
-}
 
 #[derive(Debug)]
 pub struct FailedToGetSlsMembers(Box<String>);
@@ -33,7 +25,7 @@ pub async fn fun_get_sls_members() -> Result<warp::reply::Json, warp::Rejection>
                     let db = client.database("sls_members");
                     for collection_name in sls_member_categories {
                         // Get a handle to a collection in the database.
-                        let collection = db.collection::<Member>(collection_name);
+                        let collection = db.collection::<config::SLSMEMBER>(collection_name);
                         let filter = doc! {};
                         let find_options = FindOptions::builder().sort(doc! {}).build();
                         match collection.find(filter, find_options).await {
