@@ -1,7 +1,9 @@
-use crate::config;
+use std::net::IpAddr;
+
 use serde_json::json;
 use walkdir::WalkDir;
-use std::net::IpAddr;
+
+use crate::config;
 
 #[derive(Debug)]
 pub struct FailedToReadImageFilesInFolder(Box<String>);

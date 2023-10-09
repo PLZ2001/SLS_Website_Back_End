@@ -1,10 +1,12 @@
 use std::net::IpAddr;
-use crate::config;
-use crate::token;
-use serde_json::json;
+
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+
+use crate::config;
+use crate::token;
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct NewComment {
@@ -20,7 +22,7 @@ pub struct FailedToSubmitNewComment(Box<String>);
 
 impl warp::reject::Reject for FailedToSubmitNewComment {}
 
-pub async fn fun_submit_new_comment(comment_id:String, new_comment: NewComment, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_submit_new_comment(comment_id: String, new_comment: NewComment, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -48,9 +50,12 @@ pub async fn fun_submit_new_comment(comment_id:String, new_comment: NewComment, 
                                                                     content: new_comment.content,
                                                                     user_id: user.student_id,
                                                                     time: time,
-                                                                    stat: config::STATS{watch:0,like:0,share:0,favorite:0,comment:0},
+                                                                    stat: config::STATS { watch: 0, like: 0, favorite: 0, comment: 0 },
                                                                     files: new_comment.files,
                                                                     comment_ids: Vec::new(),
+                                                                    watch_ids: Vec::new(),
+                                                                    like_ids: Vec::new(),
+                                                                    favorite_ids: Vec::new(),
                                                                 };
                                                                 match collection.insert_one(comment.clone(), None).await {
                                                                     Ok(_) => {
@@ -61,9 +66,17 @@ pub async fn fun_submit_new_comment(comment_id:String, new_comment: NewComment, 
                                                                                 Ok(find_result) => {
                                                                                     match find_result {
                                                                                         Some(post) => {
+                                                                                            let mut stat = post.stat.clone();
+                                                                                            stat.comment = stat.comment + 1;
                                                                                             let mut comment_ids = post.comment_ids.clone();
                                                                                             comment_ids.push(comment_id);
                                                                                             let update = doc! {"$set":{
+                                                                                                "stat":{
+                                                                                                    "watch":stat.watch,
+                                                                                                    "like":stat.like,
+                                                                                                    "favorite":stat.favorite,
+                                                                                                    "comment":stat.comment,
+                                                                                                },
                                                                                                 "comment_ids":comment_ids
                                                                                             }};
                                                                                             match collection.update_one(filter, update, None).await {
@@ -94,9 +107,17 @@ pub async fn fun_submit_new_comment(comment_id:String, new_comment: NewComment, 
                                                                                 Ok(find_result) => {
                                                                                     match find_result {
                                                                                         Some(comment) => {
+                                                                                            let mut stat = comment.stat.clone();
+                                                                                            stat.comment = stat.comment + 1;
                                                                                             let mut comment_ids = comment.comment_ids.clone();
                                                                                             comment_ids.push(comment_id);
                                                                                             let update = doc! {"$set":{
+                                                                                                "stat":{
+                                                                                                    "watch":stat.watch,
+                                                                                                    "like":stat.like,
+                                                                                                    "favorite":stat.favorite,
+                                                                                                    "comment":stat.comment,
+                                                                                                },
                                                                                                 "comment_ids":comment_ids
                                                                                             }};
                                                                                             match collection.update_one(filter, update, None).await {
@@ -134,7 +155,8 @@ pub async fn fun_submit_new_comment(comment_id:String, new_comment: NewComment, 
                                                                         return Err(warp::reject::custom(FailedToSubmitNewComment(Box::new(e.kind.to_string()))));
                                                                     }
                                                                 }
-                                                            } Err(e) => {
+                                                            }
+                                                            Err(e) => {
                                                                 return Err(warp::reject::custom(FailedToSubmitNewComment(Box::new(e.to_string()))));
                                                             }
                                                         }

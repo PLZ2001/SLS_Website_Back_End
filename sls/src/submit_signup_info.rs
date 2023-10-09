@@ -1,10 +1,12 @@
 use std::net::IpAddr;
-use crate::config;
-use crate::token;
-use serde_json::json;
+
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+
+use crate::config;
+use crate::token;
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct SignUpInfo {
@@ -45,7 +47,7 @@ pub async fn fun_submit_signup_info(signup_info: SignUpInfo) -> Result<warp::rep
                                         name: signup_info.name,
                                         grade: signup_info.grade,
                                         password: signup_info.password,
-                                        token: token::Token::new_empty()
+                                        token: token::Token::new_empty(),
                                     };
                                     match collection.insert_one(user.clone(), None).await {
                                         Ok(_) => {

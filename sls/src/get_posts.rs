@@ -1,11 +1,13 @@
 use std::net::IpAddr;
-use crate::config;
-use serde_json::json;
+
+use futures::StreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
 use mongodb::options::FindOptions;
-use futures::StreamExt;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+
+use crate::config;
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct GetPostsConfig {
@@ -37,16 +39,16 @@ pub async fn fun_get_posts(get_posts_config: GetPostsConfig) -> Result<warp::rep
                                         Ok(cursor) => {
                                             // Iterate over the results of the cursor.
                                             let mut cursor_enumerate = cursor.enumerate();
-                                            let mut cnt= 0;
+                                            let mut cnt = 0;
                                             'find_loop: loop {
                                                 match cursor_enumerate.next().await {
                                                     Some(find_result) => {
                                                         match find_result.1 {
                                                             Ok(post) => {
                                                                 cnt = cnt + 1; // cnt表示搜索到第几条（从1开始计数）
-                                                                if cnt <= (&sequence-1)*&pieces {
+                                                                if cnt <= (&sequence - 1) * &pieces {
                                                                     continue 'find_loop;
-                                                                } else if cnt <= &sequence*&pieces {
+                                                                } else if cnt <= &sequence * &pieces {
                                                                     posts.push(json!(post));
                                                                 } else {
                                                                     break 'find_loop;

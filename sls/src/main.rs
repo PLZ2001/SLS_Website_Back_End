@@ -1,3 +1,24 @@
+use std::env;
+use std::net::{IpAddr, SocketAddr};
+
+use warp::Filter;
+
+use get_comment_with_id::fun_get_comment_with_id;
+use get_comments::{fun_get_comments, GetCommentsConfig};
+use get_comments_of_comments::{fun_get_comments_of_comments, GetCommentsOfCommentsConfig};
+use get_name_with_student_id::fun_get_name_with_student_id;
+use get_post_with_id::fun_get_post_with_id;
+use get_posts::{fun_get_posts, GetPostsConfig};
+use get_sls_members::fun_get_sls_members;
+use get_user_name::fun_get_user_name;
+use read_image_files_in_folder::fun_read_image_files_in_folder;
+use submit_an_action::{Action, fun_submit_an_action};
+use submit_files::fun_submit_files;
+use submit_login_info::{fun_submit_login_info, LoginInfo};
+use submit_new_comment::{fun_submit_new_comment, NewComment};
+use submit_new_post::{fun_submit_new_post, NewPost};
+use submit_signup_info::{fun_submit_signup_info, SignUpInfo};
+
 mod config;
 mod get_sls_members;
 mod read_image_files_in_folder;
@@ -14,26 +35,7 @@ mod get_comments;
 mod submit_new_comment;
 mod get_comment_with_id;
 mod get_comments_of_comments;
-
-use get_sls_members::fun_get_sls_members;
-use read_image_files_in_folder::fun_read_image_files_in_folder;
-use submit_signup_info::{SignUpInfo, fun_submit_signup_info};
-use submit_login_info::{LoginInfo, fun_submit_login_info};
-use get_user_name::fun_get_user_name;
-use submit_new_post::{NewPost, fun_submit_new_post};
-use submit_files::fun_submit_files;
-use get_posts::{GetPostsConfig, fun_get_posts};
-use get_name_with_student_id::fun_get_name_with_student_id;
-use get_post_with_id::fun_get_post_with_id;
-use get_comments::{GetCommentsConfig, fun_get_comments};
-use submit_new_comment::{NewComment, fun_submit_new_comment};
-use get_comment_with_id::fun_get_comment_with_id;
-use get_comments_of_comments::{GetCommentsOfCommentsConfig, fun_get_comments_of_comments};
-
-
-use std::env;
-use std::net::{IpAddr, SocketAddr};
-use warp::Filter;
+mod submit_an_action;
 
 #[tokio::main]
 async fn main() {
@@ -47,7 +49,7 @@ async fn main() {
     let cors = warp::cors()
         .allow_origin(origin)
         .allow_credentials(true)
-        .allow_headers(vec!["Cookie", "Access-Control-Allow-Credentials","Access-Control-Allow-Origin", "Content-Type"])
+        .allow_headers(vec!["Cookie", "Access-Control-Allow-Credentials", "Access-Control-Allow-Origin", "Content-Type"])
         .allow_methods(vec!["POST", "GET", "PUT", "DELETE"]);
 
     // 设置路由
@@ -198,6 +200,17 @@ async fn main() {
         .and(warp::body::json::<GetCommentsOfCommentsConfig>())
         .and_then(fun_get_comments_of_comments);
 
+    // API15：向数据库写入给的帖子的动作
+    // url:./submit_a_action
+    // 参数：json
+    // 返回：json
+    let submit_an_action = warp::post()
+        .and(warp::path("submit_an_action"))
+        .and(warp::path::end())
+        .and(warp::body::json::<Action>())
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_submit_an_action);
+
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
     let route = dir_static
@@ -215,6 +228,7 @@ async fn main() {
         .or(submit_new_comment)
         .or(get_comment_with_id)
         .or(get_comments_of_comments)
+        .or(submit_an_action)
         .with(info_log)
         .with(cors);
 

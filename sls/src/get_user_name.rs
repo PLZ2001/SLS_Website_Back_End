@@ -1,9 +1,11 @@
-use crate::config;
-use crate::token;
-use serde_json::json;
 use std::net::IpAddr;
+
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
+use serde_json::json;
+
+use crate::config;
+use crate::token;
 
 #[derive(Debug)]
 pub struct FailedToGetUserName(Box<String>);
@@ -30,7 +32,10 @@ pub async fn fun_get_user_name(token: Option<String>) -> Result<warp::reply::Jso
                                                     if validation_result {
                                                         let sth = json!({
                                                             "status":config::API_STATUS_SUCCESS,
-                                                            "data":user.name
+                                                            "data":{
+                                                                "name": user.name,
+                                                                "student_id": user.student_id
+                                                            }
                                                         }); // 创造serde_json变量（类型叫Value）
                                                         let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                                                         return Ok(sth_warp);

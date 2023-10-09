@@ -1,21 +1,23 @@
 use std::net::IpAddr;
-use crate::config;
-use crate::token;
-use serde_json::json;
+
+use bytes::BufMut;
+use futures::StreamExt;
+use futures::TryStreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
-use warp::{multipart::{FormData, Part},};
-use futures::StreamExt;
-use bytes::BufMut;
+use serde_json::json;
 use tokio::task;
-use futures::TryStreamExt;
+use warp::{multipart::{FormData, Part}};
+
+use crate::config;
+use crate::token;
 
 #[derive(Debug)]
 pub struct FailedToSubmitFiles(Box<String>);
 
 impl warp::reject::Reject for FailedToSubmitFiles {}
 
-pub async fn save_part_to_file(file_path:String, p: Part) -> Result<(), warp::Rejection> {
+pub async fn save_part_to_file(file_path: String, p: Part) -> Result<(), warp::Rejection> {
     match p.stream().try_fold(Vec::new(), |mut vec, data| {
         vec.put(data);
         async move { Ok(vec) }
@@ -36,7 +38,7 @@ pub async fn save_part_to_file(file_path:String, p: Part) -> Result<(), warp::Re
     }
 }
 
-pub async fn fun_submit_files(post_id:String, form: FormData, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_submit_files(post_id: String, form: FormData, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -54,7 +56,7 @@ pub async fn fun_submit_files(post_id:String, form: FormData, token: Option<Stri
                                             match token::validate_token(&user.token).await {
                                                 Ok(validation_result) => {
                                                     if validation_result {
-                                                        task::spawn(async move{
+                                                        task::spawn(async move {
                                                             let file_dir = format!("./{}{}{}/", config::DIR_STATIC, config::DIR_FILES, post_id);
                                                             match tokio::fs::create_dir(file_dir).await {
                                                                 Ok(_) => {

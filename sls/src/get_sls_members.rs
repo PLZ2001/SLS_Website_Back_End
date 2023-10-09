@@ -1,11 +1,13 @@
 use std::net::IpAddr;
-use crate::config;
-use serde_json::json;
+
+use futures::StreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
 use mongodb::options::FindOptions;
-use futures::StreamExt;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+
+use crate::config;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Member {

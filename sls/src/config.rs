@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::token;
 
 pub const SERVER_URL: [u8; 4] = [127, 0, 0, 1];
@@ -35,7 +36,6 @@ pub struct FILE {
 pub struct STATS {
     pub watch: i32,
     pub like: i32,
-    pub share: i32,
     pub favorite: i32,
     pub comment: i32,
 }
@@ -50,6 +50,9 @@ pub struct POST {
     pub stat: STATS,
     pub files: Vec<FILE>,
     pub comment_ids: Vec<String>,
+    pub watch_ids: Vec<String>,
+    pub like_ids: Vec<String>,
+    pub favorite_ids: Vec<String>,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
@@ -61,4 +64,7 @@ pub struct COMMENT {
     pub stat: STATS,
     pub files: Vec<FILE>,
     pub comment_ids: Vec<String>,
+    pub watch_ids: Vec<String>,
+    pub like_ids: Vec<String>,
+    pub favorite_ids: Vec<String>,
 }

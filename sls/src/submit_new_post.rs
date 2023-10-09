@@ -1,10 +1,12 @@
 use std::net::IpAddr;
-use crate::config;
-use crate::token;
-use serde_json::json;
+
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+
+use crate::config;
+use crate::token;
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct NewPost {
@@ -19,7 +21,7 @@ pub struct FailedToSubmitNewPost(Box<String>);
 
 impl warp::reject::Reject for FailedToSubmitNewPost {}
 
-pub async fn fun_submit_new_post(post_id:String, new_post: NewPost, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_submit_new_post(post_id: String, new_post: NewPost, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -48,9 +50,12 @@ pub async fn fun_submit_new_post(post_id:String, new_post: NewPost, token: Optio
                                                                     content: new_post.content,
                                                                     user_id: user.student_id,
                                                                     time: time,
-                                                                    stat: config::STATS{watch:0,like:0,share:0,favorite:0,comment:0},
+                                                                    stat: config::STATS { watch: 0, like: 0, favorite: 0, comment: 0 },
                                                                     files: new_post.files,
                                                                     comment_ids: Vec::new(),
+                                                                    watch_ids: Vec::new(),
+                                                                    like_ids: Vec::new(),
+                                                                    favorite_ids: Vec::new(),
                                                                 };
                                                                 match collection.insert_one(post.clone(), None).await {
                                                                     Ok(_) => {
@@ -65,7 +70,8 @@ pub async fn fun_submit_new_post(post_id:String, new_post: NewPost, token: Optio
                                                                         return Err(warp::reject::custom(FailedToSubmitNewPost(Box::new(e.kind.to_string()))));
                                                                     }
                                                                 }
-                                                            } Err(e) => {
+                                                            }
+                                                            Err(e) => {
                                                                 return Err(warp::reject::custom(FailedToSubmitNewPost(Box::new(e.to_string()))));
                                                             }
                                                         }
