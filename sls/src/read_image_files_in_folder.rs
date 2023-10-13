@@ -20,7 +20,7 @@ pub async fn fun_read_image_files_in_folder() -> Result<warp::reply::Json, warp:
         if entry.file_type().is_file() {
             if let Some(extension) = entry.path().extension() {
                 match extension.to_str() {
-                    Some("jpg") | Some("jpeg") | Some("png") | Some("gif") | Some("bmp") => {
+                    Some("jpg") | Some("jpeg") | Some("png") | Some("gif") | Some("bmp") | Some("webp") => {
                         if let Some(file_name) = entry.path().file_stem() {
                             let file_name_str = file_name.to_string_lossy().to_string();
                             let file_path_str = entry.path().to_string_lossy().to_string();

@@ -14,6 +14,7 @@ pub struct NewPost {
     pub content: String,
     pub time: String,
     pub files: Vec<config::FILE>,
+    pub category: String,
 }
 
 #[derive(Debug)]
@@ -56,6 +57,7 @@ pub async fn fun_submit_new_post(post_id: String, new_post: NewPost, token: Opti
                                                                     watch_ids: Vec::new(),
                                                                     like_ids: Vec::new(),
                                                                     favorite_ids: Vec::new(),
+                                                                    category: new_post.category,
                                                                 };
                                                                 match collection.insert_one(post.clone(), None).await {
                                                                     Ok(_) => {

@@ -61,6 +61,7 @@ pub struct POST {
     pub watch_ids: Vec<String>,
     pub like_ids: Vec<String>,
     pub favorite_ids: Vec<String>,
+    pub category: String,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]

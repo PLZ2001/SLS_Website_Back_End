@@ -3,6 +3,7 @@ use std::net::IpAddr;
 use futures::StreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
+use mongodb::bson::Regex;
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -13,6 +14,8 @@ use crate::config;
 pub struct GetPostsConfig {
     pub pieces: String,
     pub sequence: String,
+    pub search: String,
+    pub category: String,
 }
 
 #[derive(Debug)]
@@ -33,7 +36,12 @@ pub async fn fun_get_posts(get_posts_config: GetPostsConfig) -> Result<warp::rep
                                     let db = client.database("forum");
                                     // Get a handle to a collection in the database.
                                     let collection = db.collection::<config::POST>("posts");
-                                    let filter = doc! {};
+                                    let filter ;
+                                    if get_posts_config.category.clone() == "all" {
+                                        filter = doc! {"$or": [{"title" : Regex{pattern:format!(".*{}.*", get_posts_config.search), options: String::new()}},{"content" : Regex{pattern:format!(".*{}.*", get_posts_config.search), options: String::new()}}]};
+                                    } else {
+                                        filter = doc! {"$or": [{"title" : Regex{pattern:format!(".*{}.*", get_posts_config.search), options: String::new()}, "category": get_posts_config.category.clone()},{"content" : Regex{pattern:format!(".*{}.*", get_posts_config.search), options: String::new()}, "category": get_posts_config.category}]};
+                                    }
                                     let find_options = FindOptions::builder().sort(doc! {"time":-1}).build();
                                     match collection.find(filter, find_options).await {
                                         Ok(cursor) => {
