@@ -36,7 +36,7 @@ pub async fn fun_get_posts(get_posts_config: GetPostsConfig) -> Result<warp::rep
                                     let db = client.database("forum");
                                     // Get a handle to a collection in the database.
                                     let collection = db.collection::<config::POST>("posts");
-                                    let filter ;
+                                    let filter;
                                     if get_posts_config.category.clone() == "all" {
                                         filter = doc! {"$or": [{"title" : Regex{pattern:format!(".*{}.*", get_posts_config.search), options: String::new()}},{"content" : Regex{pattern:format!(".*{}.*", get_posts_config.search), options: String::new()}}]};
                                     } else {

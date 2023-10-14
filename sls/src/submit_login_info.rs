@@ -1,11 +1,11 @@
 use std::net::IpAddr;
 
+use futures::StreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use futures::StreamExt;
 
 use crate::config;
 use crate::token;
@@ -58,7 +58,7 @@ async fn sls_members_verification(student_id: String) -> Result<bool, warp::Reje
                                         Some(find_result) => {
                                             match find_result.1 {
                                                 Ok(_) => {
-                                                    return Ok(true)
+                                                    return Ok(true);
                                                 }
                                                 Err(e) => {
                                                     return Err(warp::reject::custom(FailedToVerifySlsMember(Box::new(e.kind.to_string()))));

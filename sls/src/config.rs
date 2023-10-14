@@ -31,7 +31,7 @@ pub struct USER {
     pub name: String,
     pub password: String,
     pub token: token::Token,
-    pub sls_verification: bool
+    pub sls_verification: bool,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]

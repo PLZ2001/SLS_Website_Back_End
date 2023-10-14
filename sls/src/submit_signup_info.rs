@@ -46,7 +46,7 @@ pub async fn fun_submit_signup_info(signup_info: SignUpInfo) -> Result<warp::rep
                                         name: signup_info.name,
                                         password: signup_info.password,
                                         token: token::Token::new_empty(),
-                                        sls_verification: false
+                                        sls_verification: false,
                                     };
                                     match collection.insert_one(user.clone(), None).await {
                                         Ok(_) => {
