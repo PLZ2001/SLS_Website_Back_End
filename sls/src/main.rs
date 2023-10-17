@@ -20,6 +20,7 @@ use submit_login_info::{fun_submit_login_info, LoginInfo};
 use submit_new_comment::{fun_submit_new_comment, NewComment};
 use submit_new_post::{fun_submit_new_post, NewPost};
 use submit_signup_info::{fun_submit_signup_info, SignUpInfo};
+use get_sls_member_profile::fun_get_sls_member_profile;
 
 mod config;
 mod get_sls_members;
@@ -40,6 +41,7 @@ mod get_comments_of_comments;
 mod submit_an_action;
 mod get_posts_with_student_id;
 mod get_favorite_posts_with_student_id;
+mod get_sls_member_profile;
 
 #[tokio::main]
 async fn main() {
@@ -237,6 +239,16 @@ async fn main() {
         .and(warp::body::json::<GetFavoritePostsWithStudentIdConfig>())
         .and_then(fun_get_favorite_posts_with_student_id);
 
+    // API18：根据Cookie中的token，获取山林寺成员资料
+    // url:./get_sls_member_profile
+    // 参数：无
+    // 返回：json
+    let get_sls_member_profile = warp::get()
+        .and(warp::path("get_sls_member_profile"))
+        .and(warp::path::end())
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_get_sls_member_profile);
+
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
     let route = dir_static
@@ -257,6 +269,7 @@ async fn main() {
         .or(submit_an_action)
         .or(get_posts_with_student_id)
         .or(get_favorite_posts_with_student_id)
+        .or(get_sls_member_profile)
         .with(info_log)
         .with(cors);
 
