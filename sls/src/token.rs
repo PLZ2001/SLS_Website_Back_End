@@ -103,14 +103,14 @@ pub async fn clear_token(token_to_clear: &Token) -> Result<bool, warp::Rejection
     }
 }
 
-pub async fn update_token(new_token: &Token) -> Result<bool, warp::Rejection> {
+pub async fn update_token(new_token: &Token, user_category: &str) -> Result<bool, warp::Rejection> {
     match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
         Ok(client_options) => {
             match Client::with_options(client_options) {
                 Ok(client) => {
                     let db = client.database("users");
                     // Get a handle to a collection in the database.
-                    let collection = db.collection::<config::USER>("guests");
+                    let collection = db.collection::<config::USER>(user_category);
                     let filter = doc! {"student_id": new_token.student_id_of_token.clone()};
                     let update = doc! {"$set":{
                         "token":{

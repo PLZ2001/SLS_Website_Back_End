@@ -89,7 +89,7 @@ async fn sls_members_verification(student_id: String) -> Result<bool, warp::Reje
     }
 }
 
-async fn update_sls_verification(student_id: String) -> Result<bool, warp::Rejection> {
+pub async fn update_sls_verification(student_id: String) -> Result<bool, warp::Rejection> {
     match sls_members_verification(student_id.clone()).await {
         Ok(verification) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -145,7 +145,7 @@ pub async fn fun_submit_login_info(login_info: LoginInfo) -> Result<warp::reply:
                                         // 登录成功，返回新的token
                                         match Token::new(user.student_id.clone()) {
                                             Ok(token) => {
-                                                match token::update_token(&token).await {
+                                                match token::update_token(&token, "guests").await {
                                                     Ok(_) => {
                                                         match update_sls_verification(user.student_id).await {
                                                             Ok(_) => {

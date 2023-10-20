@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::token;
@@ -29,6 +28,7 @@ pub struct SLSMEMBER {
     pub phone_number: String,
     pub papers: Vec<Vec<String>>,
     pub paper_years: Vec<String>,
+    pub url: String,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]

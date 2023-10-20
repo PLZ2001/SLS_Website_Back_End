@@ -21,6 +21,11 @@ use submit_new_comment::{fun_submit_new_comment, NewComment};
 use submit_new_post::{fun_submit_new_post, NewPost};
 use submit_signup_info::{fun_submit_signup_info, SignUpInfo};
 use get_sls_member_profile::fun_get_sls_member_profile;
+use submit_sls_member_profile_update::{fun_submit_sls_member_profile_update, SlsMemberProfileUpdate};
+use get_sls_member_profile_with_student_id::fun_get_sls_member_profile_with_student_id;
+use submit_sls_member_image::fun_submit_sls_member_image;
+use submit_admin_login_info::fun_submit_admin_login_info;
+use submit_new_sls_member::{fun_submit_new_sls_member, NewSlsMember};
 
 mod config;
 mod get_sls_members;
@@ -42,6 +47,11 @@ mod submit_an_action;
 mod get_posts_with_student_id;
 mod get_favorite_posts_with_student_id;
 mod get_sls_member_profile;
+mod submit_sls_member_profile_update;
+mod get_sls_member_profile_with_student_id;
+mod submit_sls_member_image;
+mod submit_admin_login_info;
+mod submit_new_sls_member;
 
 #[tokio::main]
 async fn main() {
@@ -249,6 +259,60 @@ async fn main() {
         .and(warp::filters::cookie::optional("token"))
         .and_then(fun_get_sls_member_profile);
 
+    // API19：向数据库更新山林寺认证信息
+    // url:./submit_sls_member_profile_update
+    // 参数：json
+    // 返回：json
+    let submit_sls_member_profile_update = warp::post()
+        .and(warp::path("submit_sls_member_profile_update"))
+        .and(warp::path::end())
+        .and(warp::body::json::<SlsMemberProfileUpdate>())
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_submit_sls_member_profile_update);
+
+    // API20：根据账号获取山林寺成员资料
+    // url:./get_sls_member_profile_with_student_id/编号
+    // 参数：无
+    // 返回：json
+    let get_sls_member_profile_with_student_id = warp::get()
+        .and(warp::path("get_sls_member_profile_with_student_id"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and_then(fun_get_sls_member_profile_with_student_id);
+
+    // API21：存储山林寺成员照片
+    // url:./submit_sls_member_image
+    // 参数：formdata
+    // 返回：json
+    let submit_sls_member_image = warp::post()
+        .and(warp::path("submit_sls_member_image"))
+        .and(warp::path::end())
+        .and(warp::multipart::form().max_length(None))
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_submit_sls_member_image);
+
+    // API22：检查数据库是否可登录管理员账号
+    // url:./submit_admin_login_info
+    // 参数：json
+    // 返回：json
+    let submit_admin_login_info = warp::post()
+        .and(warp::path("submit_admin_login_info"))
+        .and(warp::path::end())
+        .and(warp::body::json::<LoginInfo>())
+        .and_then(fun_submit_admin_login_info);
+
+    // API23：向数据库写入新的山林寺成员
+    // url:./submit_new_sls_member/类型
+    // 参数：json
+    // 返回：json
+    let submit_new_sls_member = warp::post()
+        .and(warp::path("submit_new_sls_member"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::body::json::<NewSlsMember>())
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_submit_new_sls_member);
+
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
     let route = dir_static
@@ -257,21 +321,35 @@ async fn main() {
         .or(submit_signup_info)
         .or(submit_login_info)
         .or(get_user_profile)
+        .boxed()
         .or(submit_new_post)
         .or(submit_files)
+        .boxed()
         .or(get_posts)
         .or(get_user_profile_with_student_id)
         .or(get_post_with_id)
+        .boxed()
         .or(get_comments)
         .or(submit_new_comment)
         .or(get_comment_with_id)
+        .boxed()
         .or(get_comments_of_comments)
         .or(submit_an_action)
+        .boxed()
         .or(get_posts_with_student_id)
         .or(get_favorite_posts_with_student_id)
+        .boxed()
         .or(get_sls_member_profile)
+        .or(submit_sls_member_profile_update)
+        .or(get_sls_member_profile_with_student_id)
+        .boxed()
+        .or(submit_sls_member_image)
+        .or(submit_admin_login_info)
+        .or(submit_new_sls_member)
+        .boxed()
         .with(info_log)
         .with(cors);
+    //调试时不加boxed会因为or太多而溢出，release时可能可以去掉
 
     // 使路由链接到自身ip地址
     warp::serve(route)
