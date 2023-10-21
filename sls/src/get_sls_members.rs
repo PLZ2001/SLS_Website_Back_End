@@ -27,7 +27,7 @@ pub async fn fun_get_sls_members() -> Result<warp::reply::Json, warp::Rejection>
                         // Get a handle to a collection in the database.
                         let collection = db.collection::<config::SLSMEMBER>(collection_name);
                         let filter = doc! {};
-                        let find_options = FindOptions::builder().sort(doc! {}).build();
+                        let find_options = FindOptions::builder().sort(doc! {"student_id":1}).build();
                         match collection.find(filter, find_options).await {
                             Ok(cursor) => {
                                 // Iterate over the results of the cursor.

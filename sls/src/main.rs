@@ -26,6 +26,10 @@ use get_sls_member_profile_with_student_id::fun_get_sls_member_profile_with_stud
 use submit_sls_member_image::fun_submit_sls_member_image;
 use submit_admin_login_info::fun_submit_admin_login_info;
 use submit_new_sls_member::{fun_submit_new_sls_member, NewSlsMember};
+use get_admin_profile::fun_get_admin_profile;
+use submit_sls_member_removing::{SlsMemberRemoving, fun_submit_sls_member_removing};
+use submit_post_removing::{PostRemoving, fun_submit_post_removing};
+use submit_comment_removing::{CommentRemoving, fun_submit_comment_removing};
 
 mod config;
 mod get_sls_members;
@@ -52,6 +56,10 @@ mod get_sls_member_profile_with_student_id;
 mod submit_sls_member_image;
 mod submit_admin_login_info;
 mod submit_new_sls_member;
+mod get_admin_profile;
+mod submit_sls_member_removing;
+mod submit_post_removing;
+mod submit_comment_removing;
 
 #[tokio::main]
 async fn main() {
@@ -310,8 +318,52 @@ async fn main() {
         .and(warp::path::param::<String>())
         .and(warp::path::end())
         .and(warp::body::json::<NewSlsMember>())
-        .and(warp::filters::cookie::optional("token"))
+        .and(warp::filters::cookie::optional("admin_token"))
         .and_then(fun_submit_new_sls_member);
+
+    // API24：根据Cookie中的token，获取管理员资料
+    // url:./get_admin_profile
+    // 参数：无
+    // 返回：json
+    let get_admin_profile = warp::get()
+        .and(warp::path("get_admin_profile"))
+        .and(warp::path::end())
+        .and(warp::filters::cookie::optional("admin_token"))
+        .and_then(fun_get_admin_profile);
+
+    // API25：数据库删除指定的山林寺成员
+    // url:./submit_sls_member_removing/类型
+    // 参数：json
+    // 返回：json
+    let submit_sls_member_removing = warp::post()
+        .and(warp::path("submit_sls_member_removing"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::body::json::<SlsMemberRemoving>())
+        .and(warp::filters::cookie::optional("admin_token"))
+        .and_then(fun_submit_sls_member_removing);
+
+    // API26：数据库删除指定的帖子
+    // url:./submit_post_removing
+    // 参数：json
+    // 返回：json
+    let submit_post_removing = warp::post()
+        .and(warp::path("submit_post_removing"))
+        .and(warp::path::end())
+        .and(warp::body::json::<PostRemoving>())
+        .and(warp::filters::cookie::optional("admin_token"))
+        .and_then(fun_submit_post_removing);
+
+    // API27：数据库删除指定的评论
+    // url:./submit_comment_removing
+    // 参数：json
+    // 返回：json
+    let submit_comment_removing = warp::post()
+        .and(warp::path("submit_comment_removing"))
+        .and(warp::path::end())
+        .and(warp::body::json::<CommentRemoving>())
+        .and(warp::filters::cookie::optional("admin_token"))
+        .and_then(fun_submit_comment_removing);
 
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
@@ -320,11 +372,10 @@ async fn main() {
         .or(read_image_files_in_folder)
         .or(submit_signup_info)
         .or(submit_login_info)
-        .or(get_user_profile)
         .boxed()
+        .or(get_user_profile)
         .or(submit_new_post)
         .or(submit_files)
-        .boxed()
         .or(get_posts)
         .or(get_user_profile_with_student_id)
         .or(get_post_with_id)
@@ -332,21 +383,21 @@ async fn main() {
         .or(get_comments)
         .or(submit_new_comment)
         .or(get_comment_with_id)
-        .boxed()
         .or(get_comments_of_comments)
         .or(submit_an_action)
-        .boxed()
         .or(get_posts_with_student_id)
         .or(get_favorite_posts_with_student_id)
         .boxed()
         .or(get_sls_member_profile)
         .or(submit_sls_member_profile_update)
         .or(get_sls_member_profile_with_student_id)
-        .boxed()
         .or(submit_sls_member_image)
         .or(submit_admin_login_info)
         .or(submit_new_sls_member)
-        .boxed()
+        .or(get_admin_profile)
+        .or(submit_sls_member_removing)
+        .or(submit_post_removing)
+        .or(submit_comment_removing)
         .with(info_log)
         .with(cors);
     //调试时不加boxed会因为or太多而溢出，release时可能可以去掉
