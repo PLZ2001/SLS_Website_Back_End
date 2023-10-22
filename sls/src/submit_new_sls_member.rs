@@ -1,11 +1,11 @@
 use std::net::IpAddr;
 
+use futures::StreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
+use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use mongodb::options::FindOptions;
-use futures::StreamExt;
 
 use crate::config;
 use crate::token;
@@ -18,11 +18,11 @@ pub struct NewSlsMember {
 }
 
 #[derive(Debug)]
-pub struct FailedToSubmitnewSlsMember(Box<String>);
+pub struct FailedToSubmitNewSlsMember(Box<String>);
 
-impl warp::reject::Reject for FailedToSubmitnewSlsMember {}
+impl warp::reject::Reject for FailedToSubmitNewSlsMember {}
 
-pub async fn fun_submit_new_sls_member(sls_member_category:String, new_sls_member: NewSlsMember, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_submit_new_sls_member(sls_member_category: String, new_sls_member: NewSlsMember, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -62,7 +62,7 @@ pub async fn fun_submit_new_sls_member(sls_member_category:String, new_sls_membe
                                                                                     return Ok(sth_warp);
                                                                                 }
                                                                                 Err(e) => {
-                                                                                    return Err(warp::reject::custom(FailedToSubmitnewSlsMember(Box::new(e.kind.to_string()))));
+                                                                                    return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e.kind.to_string()))));
                                                                                 }
                                                                             }
                                                                         }
@@ -93,12 +93,12 @@ pub async fn fun_submit_new_sls_member(sls_member_category:String, new_sls_membe
                                                                         return Ok(sth_warp);
                                                                     }
                                                                     Err(e) => {
-                                                                        return Err(warp::reject::custom(FailedToSubmitnewSlsMember(Box::new(e.kind.to_string()))));
+                                                                        return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e.kind.to_string()))));
                                                                     }
                                                                 }
                                                             }
                                                             Err(e) => {
-                                                                return Err(warp::reject::custom(FailedToSubmitnewSlsMember(Box::new(e.kind.to_string()))));
+                                                                return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e.kind.to_string()))));
                                                             }
                                                         }
                                                     } else {
@@ -118,7 +118,7 @@ pub async fn fun_submit_new_sls_member(sls_member_category:String, new_sls_membe
                                                     }
                                                 }
                                                 Err(e) => {
-                                                    return Err(warp::reject::custom(FailedToSubmitnewSlsMember(Box::new(e))));
+                                                    return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e))));
                                                 }
                                             }
                                         }
@@ -133,17 +133,17 @@ pub async fn fun_submit_new_sls_member(sls_member_category:String, new_sls_membe
                                     }
                                 }
                                 Err(e) => {
-                                    return Err(warp::reject::custom(FailedToSubmitnewSlsMember(Box::new(e.kind.to_string()))));
+                                    return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e.kind.to_string()))));
                                 }
                             }
                         }
                         Err(e) => {
-                            return Err(warp::reject::custom(FailedToSubmitnewSlsMember(Box::new(e.kind.to_string()))));
+                            return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e.kind.to_string()))));
                         }
                     }
                 }
                 Err(e) => {
-                    return Err(warp::reject::custom(FailedToSubmitnewSlsMember(Box::new(e.kind.to_string()))));
+                    return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e.kind.to_string()))));
                 }
             }
         }

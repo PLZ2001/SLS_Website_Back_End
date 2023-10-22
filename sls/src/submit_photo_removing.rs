@@ -1,23 +1,25 @@
 use std::net::IpAddr;
 
-use futures::StreamExt;
-use futures::TryStreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tokio::task;
-use warp::multipart::FormData;
+use tokio::fs;
 
 use crate::config;
-use crate::submit_files;
 use crate::token;
 
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
+pub struct PhotoRemoving {
+    pub file_paths: Vec<String>,
+}
+
 #[derive(Debug)]
-pub struct FailedToSubmitSlsMemberImage(Box<String>);
+pub struct FailedToSubmitPhotoRemoving(Box<String>);
 
-impl warp::reject::Reject for FailedToSubmitSlsMemberImage {}
+impl warp::reject::Reject for FailedToSubmitPhotoRemoving {}
 
-pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_submit_photo_removing(photo_removing: PhotoRemoving, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -26,7 +28,7 @@ pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) 
                         Ok(client) => {
                             let db = client.database("users");
                             // Get a handle to a collection in the database.
-                            let collection = db.collection::<config::USER>("guests");
+                            let collection = db.collection::<config::USER>("admins");
                             let filter = doc! {"token.token": token.clone()};
                             match collection.find_one(filter, None).await {
                                 Ok(find_result) => {
@@ -35,43 +37,24 @@ pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) 
                                             match token::validate_token(&user.token).await {
                                                 Ok(validation_result) => {
                                                     if validation_result {
-                                                        task::spawn(async move {
-                                                            let mut parts = form.into_stream();
-                                                            'find_loop: loop {
-                                                                match parts.next().await {
-                                                                    Some(p) => {
-                                                                        match p {
-                                                                            Ok(p) => {
-                                                                                let file_name = format!("{}.png", user.student_id.as_str());
-                                                                                let file_path = format!("./{}{}/{}", config::DIR_STATIC, config::DIR_SLS_MEMBERS, file_name);
-                                                                                match submit_files::save_part_to_file(file_path, p).await {
-                                                                                    Ok(_) => {}
-                                                                                    Err(e) => {
-                                                                                        return Err(e);
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                            Err(e) => {
-                                                                                return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e.to_string()))));
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                    None => {
-                                                                        break 'find_loop;
+                                                        let mut file_paths = photo_removing.file_paths.iter();
+                                                        'delete_loop: loop {
+                                                            match file_paths.next() {
+                                                                Some(file_to_delete) => {
+                                                                    match fs::remove_file(file_to_delete).await {
+                                                                        Ok(_) => {}
+                                                                        Err(_) => {}
                                                                     }
                                                                 }
+                                                                None => {
+                                                                    break 'delete_loop;
+                                                                }
                                                             }
-                                                            let sth = json!({
-                                                                "status":config::API_STATUS_SUCCESS,
-                                                                "data":""
-                                                            }); // 创造serde_json变量（类型叫Value）
-                                                            let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
-                                                            return Ok(sth_warp);
-                                                        });
+                                                        }
                                                         let sth = json!({
-                                                                "status":config::API_STATUS_SUCCESS,
-                                                                "data":""
-                                                            }); // 创造serde_json变量（类型叫Value）
+                                                            "status":config::API_STATUS_SUCCESS,
+                                                            "data":""
+                                                        }); // 创造serde_json变量（类型叫Value）
                                                         let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                                                         return Ok(sth_warp);
                                                     } else {
@@ -91,7 +74,7 @@ pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) 
                                                     }
                                                 }
                                                 Err(e) => {
-                                                    return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e))));
+                                                    return Err(warp::reject::custom(FailedToSubmitPhotoRemoving(Box::new(e))));
                                                 }
                                             }
                                         }
@@ -106,17 +89,17 @@ pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) 
                                     }
                                 }
                                 Err(e) => {
-                                    return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e.kind.to_string()))));
+                                    return Err(warp::reject::custom(FailedToSubmitPhotoRemoving(Box::new(e.kind.to_string()))));
                                 }
                             }
                         }
                         Err(e) => {
-                            return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e.kind.to_string()))));
+                            return Err(warp::reject::custom(FailedToSubmitPhotoRemoving(Box::new(e.kind.to_string()))));
                         }
                     }
                 }
                 Err(e) => {
-                    return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e.kind.to_string()))));
+                    return Err(warp::reject::custom(FailedToSubmitPhotoRemoving(Box::new(e.kind.to_string()))));
                 }
             }
         }

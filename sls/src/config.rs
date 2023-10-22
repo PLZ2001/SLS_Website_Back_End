@@ -10,6 +10,8 @@ pub const MONGODB_URL: [u8; 4] = [127, 0, 0, 1];
 pub const MONGODB_PORT: u16 = 27017;
 pub const DIR_STATIC: &str = "resources/";
 pub const DIR_PHOTO_WALL: &str = "images/photo_wall/";
+pub const DIR_ANNUAL: &str = "images/annual/";
+pub const DIR_TEMP: &str = "images/temp/";
 pub const DIR_SLS_MEMBERS: &str = "images/sls_members/";
 pub const DIR_FILES: &str = "files/";
 pub const API_STATUS_SUCCESS: &str = "SUCCESS";
@@ -32,6 +34,12 @@ pub struct SLSMEMBER {
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
+pub struct TEXT {
+    pub text: String,
+    pub time: f64,
+}
+
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct USER {
     pub student_id: String,
     pub name: String,
@@ -44,6 +52,7 @@ pub struct USER {
 pub struct FILE {
     pub category: String,
     pub name: String,
+    pub display_name: String,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]

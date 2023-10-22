@@ -1,10 +1,10 @@
 use std::net::IpAddr;
 
+use futures::StreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
 use mongodb::options::FindOptions;
 use serde_json::json;
-use futures::StreamExt;
 
 use crate::config;
 
@@ -37,9 +37,9 @@ pub async fn fun_get_sls_member_profile_with_student_id(student_id: String) -> R
                                                     let mut _member = member.clone();
                                                     _member.image = format!("http://{}:{}/{}{}", IpAddr::from(config::SERVER_URL), config::SERVER_PORT, config::DIR_SLS_MEMBERS, member.image);
                                                     let sth = json!({
-                                        "status":config::API_STATUS_SUCCESS,
-                                        "data":_member
-                                    }); // 创造serde_json变量（类型叫Value）
+                                                        "status":config::API_STATUS_SUCCESS,
+                                                        "data":_member
+                                                    }); // 创造serde_json变量（类型叫Value）
                                                     let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                                                     return Ok(sth_warp);
                                                 }
@@ -75,5 +75,4 @@ pub async fn fun_get_sls_member_profile_with_student_id(student_id: String) -> R
             return Err(warp::reject::custom(FailedToGetSlsMemberProfileWithStudentId(Box::new(e.kind.to_string()))));
         }
     }
-
 }

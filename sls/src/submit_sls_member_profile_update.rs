@@ -1,11 +1,11 @@
 use std::net::IpAddr;
 
+use futures::StreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
+use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use mongodb::options::FindOptions;
-use futures::StreamExt;
 
 use crate::config;
 use crate::token;

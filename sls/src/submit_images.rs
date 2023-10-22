@@ -13,11 +13,23 @@ use crate::submit_files;
 use crate::token;
 
 #[derive(Debug)]
-pub struct FailedToSubmitSlsMemberImage(Box<String>);
+pub struct FailedToSubmitImages(Box<String>);
 
-impl warp::reject::Reject for FailedToSubmitSlsMemberImage {}
+impl warp::reject::Reject for FailedToSubmitImages {}
 
-pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_submit_images(folder_category: String, form: FormData, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+    let folder;
+    match folder_category.as_str() {
+        "photo_wall" => {
+            folder = config::DIR_PHOTO_WALL;
+        }
+        "annual" => {
+            folder = config::DIR_ANNUAL;
+        }
+        _ => {
+            folder = config::DIR_TEMP;
+        }
+    }
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -26,7 +38,7 @@ pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) 
                         Ok(client) => {
                             let db = client.database("users");
                             // Get a handle to a collection in the database.
-                            let collection = db.collection::<config::USER>("guests");
+                            let collection = db.collection::<config::USER>("admins");
                             let filter = doc! {"token.token": token.clone()};
                             match collection.find_one(filter, None).await {
                                 Ok(find_result) => {
@@ -42,8 +54,8 @@ pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) 
                                                                     Some(p) => {
                                                                         match p {
                                                                             Ok(p) => {
-                                                                                let file_name = format!("{}.png", user.student_id.as_str());
-                                                                                let file_path = format!("./{}{}/{}", config::DIR_STATIC, config::DIR_SLS_MEMBERS, file_name);
+                                                                                let file_name = format!("{}", p.name());
+                                                                                let file_path = format!("./{}{}/{}", config::DIR_STATIC, folder, file_name);
                                                                                 match submit_files::save_part_to_file(file_path, p).await {
                                                                                     Ok(_) => {}
                                                                                     Err(e) => {
@@ -52,7 +64,7 @@ pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) 
                                                                                 }
                                                                             }
                                                                             Err(e) => {
-                                                                                return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e.to_string()))));
+                                                                                return Err(warp::reject::custom(FailedToSubmitImages(Box::new(e.to_string()))));
                                                                             }
                                                                         }
                                                                     }
@@ -91,7 +103,7 @@ pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) 
                                                     }
                                                 }
                                                 Err(e) => {
-                                                    return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e))));
+                                                    return Err(warp::reject::custom(FailedToSubmitImages(Box::new(e))));
                                                 }
                                             }
                                         }
@@ -106,17 +118,17 @@ pub async fn fun_submit_sls_member_image(form: FormData, token: Option<String>) 
                                     }
                                 }
                                 Err(e) => {
-                                    return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e.kind.to_string()))));
+                                    return Err(warp::reject::custom(FailedToSubmitImages(Box::new(e.kind.to_string()))));
                                 }
                             }
                         }
                         Err(e) => {
-                            return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e.kind.to_string()))));
+                            return Err(warp::reject::custom(FailedToSubmitImages(Box::new(e.kind.to_string()))));
                         }
                     }
                 }
                 Err(e) => {
-                    return Err(warp::reject::custom(FailedToSubmitSlsMemberImage(Box::new(e.kind.to_string()))));
+                    return Err(warp::reject::custom(FailedToSubmitImages(Box::new(e.kind.to_string()))));
                 }
             }
         }

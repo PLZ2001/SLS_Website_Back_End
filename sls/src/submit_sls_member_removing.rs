@@ -1,11 +1,11 @@
 use std::net::IpAddr;
 
+use futures::StreamExt;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
+use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use mongodb::options::FindOptions;
-use futures::StreamExt;
 
 use crate::config;
 use crate::token;
@@ -20,7 +20,7 @@ pub struct FailedToSubmitSlsMemberRemoving(Box<String>);
 
 impl warp::reject::Reject for FailedToSubmitSlsMemberRemoving {}
 
-pub async fn fun_submit_sls_member_removing(sls_member_category:String, sls_member_removing: SlsMemberRemoving, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_submit_sls_member_removing(sls_member_category: String, sls_member_removing: SlsMemberRemoving, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {

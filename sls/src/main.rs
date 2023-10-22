@@ -3,6 +3,7 @@ use std::net::{IpAddr, SocketAddr};
 
 use warp::Filter;
 
+use get_admin_profile::fun_get_admin_profile;
 use get_comment_with_id::fun_get_comment_with_id;
 use get_comments::{fun_get_comments, GetCommentsConfig};
 use get_comments_of_comments::{fun_get_comments_of_comments, GetCommentsOfCommentsConfig};
@@ -10,26 +11,30 @@ use get_favorite_posts_with_student_id::{fun_get_favorite_posts_with_student_id,
 use get_post_with_id::fun_get_post_with_id;
 use get_posts::{fun_get_posts, GetPostsConfig};
 use get_posts_with_student_id::{fun_get_posts_with_student_id, GetPostsWithStudentIdConfig};
+use get_sls_member_profile::fun_get_sls_member_profile;
+use get_sls_member_profile_with_student_id::fun_get_sls_member_profile_with_student_id;
 use get_sls_members::fun_get_sls_members;
+use get_text::fun_get_text;
 use get_user_profile::fun_get_user_profile;
 use get_user_profile_with_student_id::fun_get_user_profile_with_student_id;
 use read_image_files_in_folder::fun_read_image_files_in_folder;
+use submit_admin_login_info::fun_submit_admin_login_info;
 use submit_an_action::{Action, fun_submit_an_action};
+use submit_comment_removing::{CommentRemoving, fun_submit_comment_removing};
 use submit_files::fun_submit_files;
+use submit_images::fun_submit_images;
 use submit_login_info::{fun_submit_login_info, LoginInfo};
 use submit_new_comment::{fun_submit_new_comment, NewComment};
 use submit_new_post::{fun_submit_new_post, NewPost};
-use submit_signup_info::{fun_submit_signup_info, SignUpInfo};
-use get_sls_member_profile::fun_get_sls_member_profile;
-use submit_sls_member_profile_update::{fun_submit_sls_member_profile_update, SlsMemberProfileUpdate};
-use get_sls_member_profile_with_student_id::fun_get_sls_member_profile_with_student_id;
-use submit_sls_member_image::fun_submit_sls_member_image;
-use submit_admin_login_info::fun_submit_admin_login_info;
 use submit_new_sls_member::{fun_submit_new_sls_member, NewSlsMember};
-use get_admin_profile::fun_get_admin_profile;
-use submit_sls_member_removing::{SlsMemberRemoving, fun_submit_sls_member_removing};
-use submit_post_removing::{PostRemoving, fun_submit_post_removing};
-use submit_comment_removing::{CommentRemoving, fun_submit_comment_removing};
+use submit_new_text::{fun_submit_new_text, NewText};
+use submit_photo_removing::{fun_submit_photo_removing, PhotoRemoving};
+use submit_post_removing::{fun_submit_post_removing, PostRemoving};
+use submit_signup_info::{fun_submit_signup_info, SignUpInfo};
+use submit_sls_member_image::fun_submit_sls_member_image;
+use submit_sls_member_moving::{fun_submit_sls_member_moving, SlsMemberMoving};
+use submit_sls_member_profile_update::{fun_submit_sls_member_profile_update, SlsMemberProfileUpdate};
+use submit_sls_member_removing::{fun_submit_sls_member_removing, SlsMemberRemoving};
 
 mod config;
 mod get_sls_members;
@@ -60,6 +65,11 @@ mod get_admin_profile;
 mod submit_sls_member_removing;
 mod submit_post_removing;
 mod submit_comment_removing;
+mod submit_sls_member_moving;
+mod submit_photo_removing;
+mod submit_images;
+mod get_text;
+mod submit_new_text;
 
 #[tokio::main]
 async fn main() {
@@ -93,6 +103,7 @@ async fn main() {
     // 返回：json
     let read_image_files_in_folder = warp::get() // 使用get方式
         .and(warp::path("read_image_files_in_folder")) // url元素
+        .and(warp::path::param::<String>())
         .and(warp::path::end()) // url结束
         .and_then(fun_read_image_files_in_folder); // 响应方式
 
@@ -365,6 +376,63 @@ async fn main() {
         .and(warp::filters::cookie::optional("admin_token"))
         .and_then(fun_submit_comment_removing);
 
+    // API28：数据库转移指定的山林寺成员
+    // url:./submit_sls_member_moving/类型
+    // 参数：json
+    // 返回：json
+    let submit_sls_member_moving = warp::post()
+        .and(warp::path("submit_sls_member_moving"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::body::json::<SlsMemberMoving>())
+        .and(warp::filters::cookie::optional("admin_token"))
+        .and_then(fun_submit_sls_member_moving);
+
+    // API29：数据库删除指定的照片墙照片
+    // url:./submit_photo_removing
+    // 参数：json
+    // 返回：json
+    let submit_photo_removing = warp::post()
+        .and(warp::path("submit_photo_removing"))
+        .and(warp::path::end())
+        .and(warp::body::json::<PhotoRemoving>())
+        .and(warp::filters::cookie::optional("admin_token"))
+        .and_then(fun_submit_photo_removing);
+
+    // API30：存储照片墙照片
+    // url:./submit_photo_wall_images
+    // 参数：formdata
+    // 返回：json
+    let submit_images = warp::post()
+        .and(warp::path("submit_images"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::multipart::form().max_length(None))
+        .and(warp::filters::cookie::optional("admin_token"))
+        .and_then(fun_submit_images);
+
+    // API31：读取文本
+    // url:./get_texts/类型
+    // 参数：无
+    // 返回：json
+    let get_text = warp::get() // 使用get方式
+        .and(warp::path("get_text")) // url元素
+        .and(warp::path::param::<String>())
+        .and(warp::path::end()) // url结束
+        .and_then(fun_get_text); // 响应方式
+
+    // API32：向数据库写入新的文本
+    // url:./submit_new_text/类型
+    // 参数：json
+    // 返回：json
+    let submit_new_text = warp::post()
+        .and(warp::path("submit_new_text"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::body::json::<NewText>())
+        .and(warp::filters::cookie::optional("admin_token"))
+        .and_then(fun_submit_new_text);
+
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
     let route = dir_static
@@ -397,7 +465,13 @@ async fn main() {
         .or(get_admin_profile)
         .or(submit_sls_member_removing)
         .or(submit_post_removing)
+        .boxed()
         .or(submit_comment_removing)
+        .or(submit_sls_member_moving)
+        .or(submit_photo_removing)
+        .or(submit_images)
+        .or(get_text)
+        .or(submit_new_text)
         .with(info_log)
         .with(cors);
     //调试时不加boxed会因为or太多而溢出，release时可能可以去掉

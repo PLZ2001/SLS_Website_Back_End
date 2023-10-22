@@ -5,9 +5,9 @@ use mongodb::bson::doc;
 use serde_json::json;
 
 use crate::config;
+use crate::submit_login_info;
 use crate::token;
 use crate::token::Token;
-use crate::submit_login_info;
 
 #[derive(Debug)]
 pub struct FailedToSubmitAdminLoginInfo(Box<String>);

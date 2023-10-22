@@ -11,16 +11,17 @@ use crate::config;
 use crate::token;
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
-pub struct PostRemoving {
-    pub post_ids: Vec<String>,
+pub struct SlsMemberMoving {
+    pub sls_member_category_target: String,
+    pub student_ids: Vec<String>,
 }
 
 #[derive(Debug)]
-pub struct FailedToSubmitPostRemoving(Box<String>);
+pub struct FailedToSubmitSlsMemberMoving(Box<String>);
 
-impl warp::reject::Reject for FailedToSubmitPostRemoving {}
+impl warp::reject::Reject for FailedToSubmitSlsMemberMoving {}
 
-pub async fn fun_submit_post_removing(post_removing: PostRemoving, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_submit_sls_member_moving(sls_member_category: String, sls_member_moving: SlsMemberMoving, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -38,10 +39,10 @@ pub async fn fun_submit_post_removing(post_removing: PostRemoving, token: Option
                                             match token::validate_token(&user.token).await {
                                                 Ok(validation_result) => {
                                                     if validation_result {
-                                                        let db = client.database("forum");
+                                                        let db = client.database("sls_members");
                                                         // Get a handle to a collection in the database.
-                                                        let collection = db.collection::<config::POST>("posts");
-                                                        let filter = doc! {"post_id": {"$in":post_removing.post_ids.clone()}};
+                                                        let collection = db.collection::<config::SLSMEMBER>(&sls_member_category);
+                                                        let filter = doc! {"student_id": {"$in":sls_member_moving.student_ids.clone()}};
                                                         let find_options = FindOptions::builder().sort(doc! {}).build();
                                                         match collection.find(filter.clone(), find_options).await {
                                                             Ok(cursor) => {
@@ -56,7 +57,7 @@ pub async fn fun_submit_post_removing(post_removing: PostRemoving, token: Option
                                                                                     counter = counter + 1;
                                                                                 }
                                                                                 Err(e) => {
-                                                                                    return Err(warp::reject::custom(FailedToSubmitPostRemoving(Box::new(e.kind.to_string()))));
+                                                                                    return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e.kind.to_string()))));
                                                                                 }
                                                                             }
                                                                         }
@@ -65,32 +66,69 @@ pub async fn fun_submit_post_removing(post_removing: PostRemoving, token: Option
                                                                         }
                                                                     }
                                                                 }
-                                                                if counter == post_removing.post_ids.len() {
-                                                                    let filter = doc! {"post_id": {"$in":post_removing.post_ids.clone()}};
-                                                                    match collection.delete_many(filter, None).await {
-                                                                        Ok(_) => {
-                                                                            let sth = json!({
-                                                                                "status":config::API_STATUS_SUCCESS,
-                                                                                "data":""
-                                                                            }); // 创造serde_json变量（类型叫Value）
-                                                                            let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
-                                                                            return Ok(sth_warp);
+                                                                if counter == sls_member_moving.student_ids.len() {
+                                                                    let filter = doc! {"student_id": {"$in":sls_member_moving.student_ids.clone()}};
+                                                                    let find_options = FindOptions::builder().sort(doc! {}).build();
+                                                                    let mut members = Vec::new();
+                                                                    match collection.find(filter.clone(), find_options).await {
+                                                                        Ok(cursor) => {
+                                                                            // Iterate over the results of the cursor.
+                                                                            let mut cursor_enumerate = cursor.enumerate();
+                                                                            'find_loop: loop {
+                                                                                match cursor_enumerate.next().await {
+                                                                                    Some(find_result) => {
+                                                                                        match find_result.1 {
+                                                                                            Ok(member) => {
+                                                                                                members.push(member);
+                                                                                            }
+                                                                                            Err(e) => {
+                                                                                                return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e.kind.to_string()))));
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                    None => {
+                                                                                        break 'find_loop;
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            let collection = db.collection::<config::SLSMEMBER>(&sls_member_moving.sls_member_category_target);
+                                                                            match collection.insert_many(members, None).await {
+                                                                                Ok(_) => {
+                                                                                    let collection = db.collection::<config::SLSMEMBER>(&sls_member_category);
+                                                                                    match collection.delete_many(filter, None).await {
+                                                                                        Ok(_) => {
+                                                                                            let sth = json!({
+                                                                                                "status":config::API_STATUS_SUCCESS,
+                                                                                                "data":""
+                                                                                            }); // 创造serde_json变量（类型叫Value）
+                                                                                            let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
+                                                                                            return Ok(sth_warp);
+                                                                                        }
+                                                                                        Err(e) => {
+                                                                                            return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e.kind.to_string()))));
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                                Err(e) => {
+                                                                                    return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e.kind.to_string()))));
+                                                                                }
+                                                                            }
                                                                         }
                                                                         Err(e) => {
-                                                                            return Err(warp::reject::custom(FailedToSubmitPostRemoving(Box::new(e.kind.to_string()))));
+                                                                            return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e.kind.to_string()))));
                                                                         }
                                                                     }
                                                                 } else {
                                                                     let sth = json!({
                                                                         "status":config::API_STATUS_FAILURE_WITH_REASONS,
-                                                                        "reasons":"不能删除不存在的帖子"
+                                                                        "reasons":"不能转移不存在的山林寺成员"
                                                                     }); // 创造serde_json变量（类型叫Value）
                                                                     let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                                                                     return Ok(sth_warp);
                                                                 }
                                                             }
                                                             Err(e) => {
-                                                                return Err(warp::reject::custom(FailedToSubmitPostRemoving(Box::new(e.kind.to_string()))));
+                                                                return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e.kind.to_string()))));
                                                             }
                                                         }
                                                     } else {
@@ -110,7 +148,7 @@ pub async fn fun_submit_post_removing(post_removing: PostRemoving, token: Option
                                                     }
                                                 }
                                                 Err(e) => {
-                                                    return Err(warp::reject::custom(FailedToSubmitPostRemoving(Box::new(e))));
+                                                    return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e))));
                                                 }
                                             }
                                         }
@@ -125,17 +163,17 @@ pub async fn fun_submit_post_removing(post_removing: PostRemoving, token: Option
                                     }
                                 }
                                 Err(e) => {
-                                    return Err(warp::reject::custom(FailedToSubmitPostRemoving(Box::new(e.kind.to_string()))));
+                                    return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e.kind.to_string()))));
                                 }
                             }
                         }
                         Err(e) => {
-                            return Err(warp::reject::custom(FailedToSubmitPostRemoving(Box::new(e.kind.to_string()))));
+                            return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e.kind.to_string()))));
                         }
                     }
                 }
                 Err(e) => {
-                    return Err(warp::reject::custom(FailedToSubmitPostRemoving(Box::new(e.kind.to_string()))));
+                    return Err(warp::reject::custom(FailedToSubmitSlsMemberMoving(Box::new(e.kind.to_string()))));
                 }
             }
         }

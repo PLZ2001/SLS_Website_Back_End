@@ -10,9 +10,21 @@ pub struct FailedToReadImageFilesInFolder(Box<String>);
 
 impl warp::reject::Reject for FailedToReadImageFilesInFolder {}
 
-pub async fn fun_read_image_files_in_folder() -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_read_image_files_in_folder(folder_category: String) -> Result<warp::reply::Json, warp::Rejection> {
+    let folder;
+    match folder_category.as_str() {
+        "photo_wall" => {
+            folder = config::DIR_PHOTO_WALL;
+        }
+        "annual" => {
+            folder = config::DIR_ANNUAL;
+        }
+        _ => {
+            folder = config::DIR_TEMP;
+        }
+    }
     let mut image_files = Vec::new();
-    for entry in WalkDir::new(format!("{}{}", config::DIR_STATIC, config::DIR_PHOTO_WALL))
+    for entry in WalkDir::new(format!("{}{}", config::DIR_STATIC, folder))
         .follow_links(true)
         .into_iter()
         .filter_map(|e| e.ok())
@@ -26,7 +38,8 @@ pub async fn fun_read_image_files_in_folder() -> Result<warp::reply::Json, warp:
                             let file_path_str = entry.path().to_string_lossy().to_string();
                             image_files.push(json!({
                                 "image":format!("http://{}:{}/{}", IpAddr::from(config::SERVER_URL), config::SERVER_PORT, &file_path_str[config::DIR_STATIC.len()..]),
-                                "title":file_name_str
+                                "title":file_name_str,
+                                "file_path":file_path_str
                             }));
                         }
                     }
