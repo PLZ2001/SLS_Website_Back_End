@@ -1,5 +1,3 @@
-use std::net::IpAddr;
-
 use serde_json::json;
 use walkdir::WalkDir;
 
@@ -37,7 +35,7 @@ pub async fn fun_read_image_files_in_folder(folder_category: String) -> Result<w
                             let file_name_str = file_name.to_string_lossy().to_string();
                             let file_path_str = entry.path().to_string_lossy().to_string();
                             image_files.push(json!({
-                                "image":format!("http://{}:{}/{}", IpAddr::from(config::SERVER_URL), config::SERVER_PORT, &file_path_str[config::DIR_STATIC.len()..]),
+                                "image":format!("http://{}:{}/{}", config::SERVER_URL, config::SERVER_PORT, &file_path_str[config::DIR_STATIC.len()..]),
                                 "title":file_name_str,
                                 "file_path":file_path_str
                             }));

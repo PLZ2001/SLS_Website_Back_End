@@ -6,6 +6,7 @@ use mongodb::bson::doc;
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use tokio::fs;
 
 use crate::config;
 use crate::token;
@@ -71,29 +72,40 @@ pub async fn fun_submit_new_sls_member(sls_member_category: String, new_sls_memb
                                                                         }
                                                                     }
                                                                 }
-                                                                let sls_member = config::SLSMEMBER {
-                                                                    name: new_sls_member.name,
-                                                                    description: new_sls_member.description,
-                                                                    image: String::from("default.png"),
-                                                                    student_id: new_sls_member.student_id.clone(),
-                                                                    introduction: String::new(),
-                                                                    email: String::new(),
-                                                                    phone_number: String::new(),
-                                                                    papers: Vec::new(),
-                                                                    paper_years: Vec::new(),
-                                                                    url: format!("http://{}:{}/sls_member/{}", IpAddr::from(config::FRONT_URL), config::FRONT_PORT, new_sls_member.student_id),
-                                                                };
-                                                                match collection.insert_one(sls_member.clone(), None).await {
+                                                                let new_file_name = format!("{}.png", new_sls_member.student_id.as_str());
+                                                                let old_file_name = format!("{}.png", "default");
+                                                                let new_file_path = format!("./{}{}/{}", config::DIR_STATIC, config::DIR_SLS_MEMBERS, new_file_name);
+                                                                let old_file_path = format!("./{}{}/{}", config::DIR_STATIC, config::DIR_SLS_MEMBERS, old_file_name);
+                                                                match fs::copy(old_file_path, new_file_path).await {
                                                                     Ok(_) => {
-                                                                        let sth = json!({
-                                                                            "status":config::API_STATUS_SUCCESS,
-                                                                            "data":sls_member
+                                                                        let sls_member = config::SLSMEMBER {
+                                                                            name: new_sls_member.name,
+                                                                            description: new_sls_member.description,
+                                                                            image: format!("{}.png", new_sls_member.student_id.as_str()),
+                                                                            student_id: new_sls_member.student_id.clone(),
+                                                                            introduction: String::new(),
+                                                                            email: String::new(),
+                                                                            phone_number: String::new(),
+                                                                            papers: Vec::new(),
+                                                                            paper_years: Vec::new(),
+                                                                            url: format!("http://{}:{}/sls_member/{}", config::FRONT_URL, config::FRONT_PORT, new_sls_member.student_id),
+                                                                        };
+                                                                        match collection.insert_one(sls_member.clone(), None).await {
+                                                                            Ok(_) => {
+                                                                                let sth = json!({
+                                                                        "status":config::API_STATUS_SUCCESS,
+                                                                        "data":sls_member
                                                                         }); // 创造serde_json变量（类型叫Value）
-                                                                        let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
-                                                                        return Ok(sth_warp);
+                                                                                let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
+                                                                                return Ok(sth_warp);
+                                                                            }
+                                                                            Err(e) => {
+                                                                                return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e.kind.to_string()))));
+                                                                            }
+                                                                        }
                                                                     }
                                                                     Err(e) => {
-                                                                        return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e.kind.to_string()))));
+                                                                        return Err(warp::reject::custom(FailedToSubmitNewSlsMember(Box::new(e.kind().to_string()))));
                                                                     }
                                                                 }
                                                             }

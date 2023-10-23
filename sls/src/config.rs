@@ -2,9 +2,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::token;
 
-pub const SERVER_URL: [u8; 4] = [127, 0, 0, 1];
+pub const SELF_URL: [u16; 8] = [0, 0, 0, 0, 0, 0, 0, 0]; // 部署
+// pub const SELF_URL: [u8; 4] = [127, 0, 0, 1]; // 调试
+pub const SELF_PORT: u16 = 4000;
+pub const SERVER_URL: &str = "psplhl-pc.dynv6.net"; // 部署
+// pub const SERVER_URL: &str = "127.0.0.1"; // 调试
 pub const SERVER_PORT: u16 = 4000;
-pub const FRONT_URL: [u8; 4] = [127, 0, 0, 1];
+pub const FRONT_URL: &str = "psplhl-pc.dynv6.net"; // 部署
+// pub const FRONT_URL: &str = "127.0.0.1"; // 调试
 pub const FRONT_PORT: u16 = 3001;
 pub const MONGODB_URL: [u8; 4] = [127, 0, 0, 1];
 pub const MONGODB_PORT: u16 = 27017;

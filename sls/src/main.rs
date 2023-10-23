@@ -1,5 +1,4 @@
 use std::env;
-use std::net::{IpAddr, SocketAddr};
 
 use warp::Filter;
 
@@ -79,7 +78,7 @@ async fn main() {
     let info_log = warp::log("info_log");
 
     // 设置cors
-    let origin: &str = &format!("http://{}:{}", IpAddr::from(config::FRONT_URL), config::FRONT_PORT);
+    let origin: &str = &format!("http://{}:{}", config::FRONT_URL, config::FRONT_PORT);
     let cors = warp::cors()
         .allow_origin(origin)
         .allow_credentials(true)
@@ -478,6 +477,6 @@ async fn main() {
 
     // 使路由链接到自身ip地址
     warp::serve(route)
-        .run(SocketAddr::new(IpAddr::from(config::SERVER_URL), config::SERVER_PORT))
+        .run((config::SELF_URL, config::SELF_PORT))
         .await; // 阻塞运行
 }

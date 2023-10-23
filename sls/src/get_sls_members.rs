@@ -38,7 +38,7 @@ pub async fn fun_get_sls_members() -> Result<warp::reply::Json, warp::Rejection>
                                             match find_result.1 {
                                                 Ok(member) => {
                                                     let mut _member = member.clone();
-                                                    _member.image = format!("http://{}:{}/{}{}", IpAddr::from(config::SERVER_URL), config::SERVER_PORT, config::DIR_SLS_MEMBERS, member.image);
+                                                    _member.image = format!("http://{}:{}/{}{}", config::SERVER_URL, config::SERVER_PORT, config::DIR_SLS_MEMBERS, member.image);
                                                     match collection_name {
                                                         "teachers" => {
                                                             teachers.push(_member)
