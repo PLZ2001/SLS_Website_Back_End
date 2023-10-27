@@ -34,7 +34,7 @@ use submit_sls_member_image::fun_submit_sls_member_image;
 use submit_sls_member_moving::{fun_submit_sls_member_moving, SlsMemberMoving};
 use submit_sls_member_profile_update::{fun_submit_sls_member_profile_update, SlsMemberProfileUpdate};
 use submit_sls_member_removing::{fun_submit_sls_member_removing, SlsMemberRemoving};
-use get_fsmap::fun_get_fsmap;
+use get_fsmap::{fun_get_fsmap, GetFsMapConfig};
 
 mod config;
 mod get_sls_members;
@@ -436,13 +436,14 @@ async fn main() {
 
     // API33：读取文件树
     // url:./get_fsmap
-    // 参数：无
+    // 参数：json
     // 返回：json
-    let get_fsmap = warp::get() // 使用get方式
-        .and(warp::path("get_fsmap")) // url元素
-        .and(warp::path::end()) // url结束
+    let get_fsmap = warp::post()
+        .and(warp::path("get_fsmap"))
+        .and(warp::path::end())
+        .and(warp::body::json::<GetFsMapConfig>())
         .and(warp::filters::cookie::optional("token"))
-        .and_then(fun_get_fsmap); // 响应方式
+        .and_then(fun_get_fsmap);
 
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);

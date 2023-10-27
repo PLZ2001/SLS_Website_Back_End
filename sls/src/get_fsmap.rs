@@ -23,6 +23,11 @@ pub struct FailedToGetFsMap(Box<String>);
 impl warp::reject::Reject for FailedToGetFsMap {}
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
+pub struct GetFsMapConfig {
+    pub path: String,
+}
+
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct FileObject {
     pub id: String,
     pub name: String,
@@ -54,7 +59,7 @@ fn is_hidden(
     };
 }
 
-pub async fn fun_get_fsmap(token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
+pub async fn fun_get_fsmap(get_fsmap_config: GetFsMapConfig, token: Option<String>) -> Result<warp::reply::Json, warp::Rejection> {
     match token {
         Some(token) => {
             match ClientOptions::parse(format!("mongodb://{}:{}", IpAddr::from(config::MONGODB_URL), config::MONGODB_PORT)).await {
@@ -75,7 +80,51 @@ pub async fn fun_get_fsmap(token: Option<String>) -> Result<warp::reply::Json, w
                                                         if user.sls_verification {
                                                             let mut fsmap: HashMap<String, FileObject> = HashMap::new();
                                                             let mut fsmap_depth_map: HashMap<usize, Vec<FileObject>> = HashMap::new();
-                                                            for entry_result in WalkDir::new(format!("{}{}", config::DIR_STATIC, config::DIR_FTP)).into_iter().filter_entry(|e| !is_hidden(e.path())) {
+
+                                                            let file_name_str = "root".to_string();
+                                                            let file_path_str = format!("{}{}", config::DIR_STATIC, get_fsmap_config.path);
+                                                            let id = digest(file_path_str.clone());
+                                                            let parentId= String::new();
+                                                            match fs::metadata(format!("{}{}", config::DIR_STATIC, get_fsmap_config.path)).await {
+                                                                Ok(metadata) => {
+                                                                    match metadata.modified() {
+                                                                        Ok(modDate) => {
+                                                                            let datetime: DateTime<Local> = modDate.into();
+                                                                            let file_object = FileObject {
+                                                                                id:id.clone(),
+                                                                                name:file_name_str.clone(),
+                                                                                isDir: true,
+                                                                                childrenIds: Vec::new(),
+                                                                                parentId: parentId.clone(),
+                                                                                childrenCount: 0,
+                                                                                size: metadata.file_size(),
+                                                                                modDate: datetime.format("%Y/%m/%d %T").to_string(),
+                                                                                thumbnailUrl: String::new(),
+                                                                            };
+                                                                            fsmap.insert(id.clone(), file_object.clone());
+                                                                            match fsmap_depth_map.get(&0) {
+                                                                                Some(vector) => {
+                                                                                    let mut vector_new = vector.clone();
+                                                                                    vector_new.push(file_object.clone());
+                                                                                    fsmap_depth_map.insert(0, vector_new);
+                                                                                }
+                                                                                None => {
+                                                                                    let mut vector_new = Vec::new();
+                                                                                    vector_new.push(file_object.clone());
+                                                                                    fsmap_depth_map.insert(0, vector_new);
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        Err(e) => {
+                                                                            return Err(warp::reject::custom(FailedToGetFsMap(Box::new(e.kind().to_string()))));
+                                                                        }
+                                                                    }
+                                                                }
+                                                                Err(e) => {
+                                                                    return Err(warp::reject::custom(FailedToGetFsMap(Box::new(e.kind().to_string()))));
+                                                                }
+                                                            }
+                                                            for entry_result in WalkDir::new(format!("{}{}", config::DIR_STATIC, get_fsmap_config.path)).min_depth(0).max_depth(2).into_iter().filter_entry(|e| !is_hidden(e.path())) {
                                                                 match entry_result {
                                                                     Ok (entry) => {
                                                                         if entry.file_type().is_file() {
@@ -235,7 +284,7 @@ pub async fn fun_get_fsmap(token: Option<String>) -> Result<warp::reply::Json, w
                                                             let sth = json!({
                                                                 "status":config::API_STATUS_SUCCESS,
                                                                 "data": {
-                                                                    "rootFolderId": digest(format!("{}{}", config::DIR_STATIC, config::DIR_FTP)),
+                                                                    "rootFolderId": digest(format!("{}{}", config::DIR_STATIC, get_fsmap_config.path)),
                                                                     "fileMap": fsmap,
                                                                 }
                                                             }); // 创造serde_json变量（类型叫Value）

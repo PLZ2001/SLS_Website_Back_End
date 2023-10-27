@@ -2,14 +2,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::token;
 
-// pub const SELF_URL: [u16; 8] = [0, 0, 0, 0, 0, 0, 0, 0]; // 部署
-pub const SELF_URL: [u8; 4] = [127, 0, 0, 1]; // 调试
+pub const SELF_URL: [u16; 8] = [0, 0, 0, 0, 0, 0, 0, 0]; // 部署
+// pub const SELF_URL: [u8; 4] = [127, 0, 0, 1]; // 调试
 pub const SELF_PORT: u16 = 4000;
-// pub const SERVER_URL: &str = "psplhl-pc.dynv6.net"; // 部署
-pub const SERVER_URL: &str = "127.0.0.1"; // 调试
+pub const SERVER_URL: &str = "psplhl-pc.dynv6.net"; // 部署
+// pub const SERVER_URL: &str = "127.0.0.1"; // 调试
 pub const SERVER_PORT: u16 = 4000;
-// pub const FRONT_URL: &str = "psplhl-pc.dynv6.net"; // 部署
-pub const FRONT_URL: &str = "127.0.0.1"; // 调试
+pub const FRONT_URL: &str = "psplhl-pc.dynv6.net"; // 部署
+// pub const FRONT_URL: &str = "127.0.0.1"; // 调试
 pub const FRONT_PORT: u16 = 3001;
 pub const MONGODB_URL: [u8; 4] = [127, 0, 0, 1];
 pub const MONGODB_PORT: u16 = 27017;
@@ -19,7 +19,6 @@ pub const DIR_ANNUAL: &str = "images/annual/";
 pub const DIR_TEMP: &str = "images/temp/";
 pub const DIR_SLS_MEMBERS: &str = "images/sls_members/";
 pub const DIR_FILES: &str = "files/";
-pub const DIR_FTP: &str = "ftp/";
 pub const API_STATUS_SUCCESS: &str = "SUCCESS";
 pub const API_STATUS_FAILURE_WITH_REASONS: &str = "FAILURE_WITH_REASONS";
 pub const API_STATUS_FAILURE_WITHOUT_REASONS: &str = "FAILURE_WITHOUT_REASONS";
