@@ -155,7 +155,7 @@ pub async fn fun_submit_sls_member_moving(sls_member_category: String, sls_membe
                                         None => {
                                             let sth = json!({
                                                 "status":config::API_STATUS_FAILURE_WITH_REASONS,
-                                                "reasons":format!("token无效")
+                                                "reasons":format!("请重新登录")
                                             }); // 创造serde_json变量（类型叫Value）
                                             let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
                                             return Ok(sth_warp);
@@ -180,7 +180,7 @@ pub async fn fun_submit_sls_member_moving(sls_member_category: String, sls_membe
         None => {
             let sth = json!({
                 "status":config::API_STATUS_FAILURE_WITH_REASONS,
-                "reasons":"无token"
+                "reasons":"请登录后再试"
             }); // 创造serde_json变量（类型叫Value）
             let sth_warp = warp::reply::json(&sth); // 转换为warp的json格式
             return Ok(sth_warp);

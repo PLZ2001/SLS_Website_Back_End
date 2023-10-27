@@ -34,6 +34,7 @@ use submit_sls_member_image::fun_submit_sls_member_image;
 use submit_sls_member_moving::{fun_submit_sls_member_moving, SlsMemberMoving};
 use submit_sls_member_profile_update::{fun_submit_sls_member_profile_update, SlsMemberProfileUpdate};
 use submit_sls_member_removing::{fun_submit_sls_member_removing, SlsMemberRemoving};
+use get_fsmap::fun_get_fsmap;
 
 mod config;
 mod get_sls_members;
@@ -69,6 +70,7 @@ mod submit_photo_removing;
 mod submit_images;
 mod get_text;
 mod submit_new_text;
+mod get_fsmap;
 
 #[tokio::main]
 async fn main() {
@@ -432,6 +434,16 @@ async fn main() {
         .and(warp::filters::cookie::optional("admin_token"))
         .and_then(fun_submit_new_text);
 
+    // API33：读取文件树
+    // url:./get_fsmap
+    // 参数：无
+    // 返回：json
+    let get_fsmap = warp::get() // 使用get方式
+        .and(warp::path("get_fsmap")) // url元素
+        .and(warp::path::end()) // url结束
+        .and(warp::filters::cookie::optional("token"))
+        .and_then(fun_get_fsmap); // 响应方式
+
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
     let route = dir_static
@@ -471,6 +483,7 @@ async fn main() {
         .or(submit_images)
         .or(get_text)
         .or(submit_new_text)
+        .or(get_fsmap)
         .with(info_log)
         .with(cors);
     //调试时不加boxed会因为or太多而溢出，release时可能可以去掉

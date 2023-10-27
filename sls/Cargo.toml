@@ -17,3 +17,4 @@ serde = { version = "1.0", features = ["derive"] } # 用于mongo数据库读取
 walkdir = "2.4.0" # 用于照片墙读取照片
 sha256 = "1.1.2" # SHA256
 bytes = "1.0" # 用于存储文件
+chrono = "0.4.31" # 用于转换时间字符串
