@@ -35,6 +35,7 @@ use submit_sls_member_moving::{fun_submit_sls_member_moving, SlsMemberMoving};
 use submit_sls_member_profile_update::{fun_submit_sls_member_profile_update, SlsMemberProfileUpdate};
 use submit_sls_member_removing::{fun_submit_sls_member_removing, SlsMemberRemoving};
 use get_fsmap::{fun_get_fsmap, GetFsMapConfig};
+use submit_change_password_info::{fun_submit_change_password_info, ChangePasswordInfo};
 
 mod config;
 mod get_sls_members;
@@ -71,6 +72,7 @@ mod submit_images;
 mod get_text;
 mod submit_new_text;
 mod get_fsmap;
+mod submit_change_password_info;
 
 #[tokio::main]
 async fn main() {
@@ -445,6 +447,16 @@ async fn main() {
         .and(warp::filters::cookie::optional("token"))
         .and_then(fun_get_fsmap);
 
+    // API34：修改密码
+    // url:./submit_change_password_info
+    // 参数：json
+    // 返回：json
+    let submit_change_password_info = warp::post()
+        .and(warp::path("submit_change_password_info"))
+        .and(warp::path::end())
+        .and(warp::body::json::<ChangePasswordInfo>())
+        .and_then(fun_submit_change_password_info);
+
     // 合并路由
     let dir_static = warp::fs::dir(config::DIR_STATIC);
     let route = dir_static
@@ -485,6 +497,7 @@ async fn main() {
         .or(get_text)
         .or(submit_new_text)
         .or(get_fsmap)
+        .or(submit_change_password_info)
         .with(info_log)
         .with(cors);
     //调试时不加boxed会因为or太多而溢出，release时可能可以去掉
